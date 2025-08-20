@@ -8,6 +8,7 @@ typedef void* JsonDoc;
 typedef void* JsonElement;
 typedef void* JsonObject;
 typedef void* JsonArray;
+typedef void* JsonString;
 
 typedef enum JsonError { 
     JsonError_NONE, 
@@ -72,6 +73,17 @@ JsonError json_array_get_element_at_index(
     JsonArray array,
     size_t index,
     JsonElement* value
+);
+
+JsonError json_string_get_length(
+    JsonString string, 
+    size_t* out_length
+);
+
+JsonError json_string_get_bytes(
+    JsonString string, 
+    const char** out_bytes,
+    size_t* out_bytes_count
 );
 
 #endif

@@ -5,6 +5,9 @@
 #define MAX_OBJECT_PROPERTY_COUNT 50
 #define MAX_ARRAY_ELEMENTS_COUNT 50
 
+#define JsonByte char
+#define JsonBool char
+
 typedef struct JsonParser_t {
     char buffer[256];
     size_t write_head;
@@ -23,7 +26,7 @@ typedef struct JsonElement_t {
     {
         char is_null;
         float float_value;
-        char bool_value;
+        JsonBool bool_value;
         char* str_value;
         JsonObject obj_value;
         JsonArray array_value;
@@ -44,6 +47,12 @@ typedef struct JsonArray_t {
 typedef struct JsonDoc_t {
     JsonElement root;
 } JsonDoc_t;
+
+typedef struct JsonString_t {
+    JsonByte* bytes;
+    size_t bytes_count;
+    size_t length;
+} JsonString_t;
 
 static JsonError parse_object(JsonParser_t* parser, FILE* file, JsonObject_t* object);
 static JsonError parse_array(JsonParser_t* parser, FILE* file, JsonArray_t* array);
