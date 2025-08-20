@@ -1,0 +1,40 @@
+# Object files
+*.o
+*.obj
+
+# Precompiled headers
+*.gch
+*.pch
+
+# Libraries
+*.lib
+*.a
+*.so
+*.dll
+
+# Executables
+*.exe
+*.out
+*.app
+
+# Debug files
+*.dSYM/
+*.stackdump
+*.log
+
+# Makefile generated files
+*.d
+*.dirstamp
+*.dep
+
+# IDE / Editor files
+.vscode/
+.idea/
+*.suo
+*.user
+*.swp
+*.bak
+
+# OS files
+.DS_Store
+Thumbs.db
