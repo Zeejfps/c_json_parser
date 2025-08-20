@@ -40,10 +40,19 @@ JsonError json_element_get_value_string(
     char** out_value
 );
 
-JsonError json_element_get_value_str_len(
-    JsonDoc doc,
-    JsonElement element, 
-    u_int32_t* len
+JsonError json_element_get_value_number(
+    JsonElement element,
+    float* out_value
+);
+
+JsonError json_element_get_value_array(
+    JsonElement element,
+    JsonArray* out_value
+);
+
+JsonError json_element_get_value_boolean(
+    JsonElement element,
+    char* out_value
 );
 
 JsonError json_object_get_property_by_name(

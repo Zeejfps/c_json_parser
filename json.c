@@ -508,10 +508,26 @@ JsonError json_element_get_value_string(
     return JsonError_NONE;
 }
 
-JsonError json_element_get_value_str_len(
-    JsonDoc doc,
-    JsonElement element, 
-    u_int32_t* len
-) {
+JsonError json_element_get_value_boolean(
+    JsonElement element_handle,
+    char* out_value
+){
+    JsonElement_t* element = (JsonElement_t*)element_handle;
+    if (element->kind != JsonElementKind_BOOLEAN) {
+        return JsonError_ELEMENT_KIND_MISSMATCH;
+    }
+    *out_value = element->value.bool_value;
+    return JsonError_NONE;
+}
+
+JsonError json_element_get_value_number(
+    JsonElement element_handle,
+    float* out_value
+){
+    JsonElement_t* element = (JsonElement_t*)element_handle;
+    if (element->kind != JsonElementKind_NUMBER) {
+        return JsonError_ELEMENT_KIND_MISSMATCH;
+    }
+    *out_value = element->value.float_value;
     return JsonError_NONE;
 }
