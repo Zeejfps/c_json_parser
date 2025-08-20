@@ -2,6 +2,8 @@
 #include <string.h>
 #include "json.h"
 
+#define MAX_OBJECT_PROPERTY_COUNT 50
+
 typedef struct JsonParser_t {
     char buffer[256];
     size_t write_head;
@@ -69,10 +71,13 @@ JsonArray_t* create_array() {
 }
 
 JsonObject_t* create_object() {
-    return (JsonObject_t*)calloc(1, sizeof(JsonObject_t));
+    JsonObject_t* obj = (JsonObject_t*)calloc(1, sizeof(JsonObject_t));
+    obj->property_names = calloc(MAX_OBJECT_PROPERTY_COUNT, sizeof(char*));
+    obj->property_values = calloc(MAX_OBJECT_PROPERTY_COUNT, sizeof(JsonElement_t*));
+    return obj;
 }
 
-JsonError parse_string(JsonParser_t* parser, FILE* file) {
+JsonError read_string(JsonParser_t* parser, FILE* file) {
     int c;
     while ((c = fgetc(file)) != EOF) {
         if (c == '"') {
@@ -85,19 +90,46 @@ JsonError parse_string(JsonParser_t* parser, FILE* file) {
     }
 }
 
+JsonError read_name_value_separator(JsonParser_t* parser, FILE* file) {
+    int c;
+    while ((c = fgetc(file)) != EOF) {
+        if (c == ':') {
+            return JsonError_NONE;
+        }
+    }
+}
+
+JsonError parse_element(JsonParser_t* parser, FILE* file, JsonElement_t* element) {
+    return JsonError_NONE;
+}
+
 JsonError parse_object(JsonParser_t* parser, FILE* file, JsonObject_t* object) {
     int c;
     while ((c = fgetc(file)) != EOF) {
         if (c == '"') {
-            JsonError err = parse_string(parser, file);
-            if (err != JsonError_NONE)
+            JsonError err = read_string(parser, file);
+            if (err != JsonError_NONE){
+                printf("Failed to parse string\n");
                 return err;
+            }
+
             size_t property_name_len = parser->write_head;
-            char* property_name = malloc(sizeof(char) * property_name_len + 1);
+            char* property_name = malloc(sizeof(char) * (property_name_len + 1));
             memcpy(property_name, parser->buffer, sizeof(char) * property_name_len);
+            printf("Property Name: %s\n", property_name);
+
+            err = read_name_value_separator(parser, file);
+            if (err != JsonError_NONE) {
+                printf("Failed to read name-value separator");
+                return err;
+            }
 
             JsonElement_t* element = create_element();
-            parse_element(parser, file, element);
+            err = parse_element(parser, file, element);
+            if (err != JsonError_NONE) {
+                printf("Failed to parse property value");
+                return err;
+            }
 
             size_t property_index = object->property_count;
             object->property_count++;
@@ -108,9 +140,11 @@ JsonError parse_object(JsonParser_t* parser, FILE* file, JsonObject_t* object) {
             return JsonError_NONE;
         }
         else if (c != ' ' && c != '\r' && c != '\n') {
+            printf("Unexpected character encountered: %c\n", (char)c);
             return JsonError_PARSER_ERROR;
         }
     }
+    return JsonError_PARSER_ERROR;
 }
 
 JsonError parse_array(JsonParser_t* parser, FILE* file, JsonArray_t* array) {
@@ -135,6 +169,7 @@ JsonError json_parse_file(
             JsonObject_t* obj = create_object();
             JsonError err = parse_object(&parser, file, obj);
             if (err != JsonError_NONE) {
+                printf("Failed to parse obj\n");
                 return err;
             }
             root_element->value.obj_value = obj;
