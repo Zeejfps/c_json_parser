@@ -57,6 +57,9 @@ typedef struct JsonString_t {
 static JsonError parse_object(JsonParser_t* parser, FILE* file, JsonObject_t* object);
 static JsonError parse_array(JsonParser_t* parser, FILE* file, JsonArray_t* array);
 
+static JsonString_t* string_create();
+static void string_destroy(JsonString_t* string);
+
 static JsonElement_t* element_create();
 static void element_destroy(JsonElement_t* element);
 
@@ -65,6 +68,29 @@ static void array_destroy(JsonArray_t* array);
 
 static JsonObject_t* object_create();
 static void object_destroy(JsonObject_t* obj);
+
+static JsonString_t* string_create() {
+    JsonString_t* string = (JsonString_t*)calloc(1, sizeof(JsonString_t));
+    return string;
+}
+
+static void string_destroy(JsonString_t* string) {
+
+    if (string == 0){
+        return;
+    }
+
+    if (string->bytes != 0) {
+        free(string->bytes);
+        string->bytes = 0;
+    }
+
+    string->bytes_count = 0;
+    string->length = 0;
+
+    free(string);
+    string = 0;
+}
 
 JsonDoc_t* doc_create() {
     JsonDoc_t* doc = (JsonDoc_t*)calloc(1, sizeof(JsonDoc_t));
