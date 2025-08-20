@@ -50,6 +50,14 @@ int main() {
 
     printf("Tags count: %zu\n", tags_count);
 
+    JsonElement tag_element;
+    json_array_get_element_at_index(tags_array, 1, &tag_element);
+
+    char* tag_value;
+    json_element_get_value_string(tag_element, &tag_value);
+
+    printf("Tag value: '%s'\n", tag_value);
+
     json_doc_destroy(&doc);
 
     return 0;

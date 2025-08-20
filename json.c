@@ -550,8 +550,25 @@ JsonError json_array_get_length(
 ) {
     JsonArray_t* array = (JsonArray_t*)array_handle;
     if (array == 0) {
-        return JsonError_ELEMENT_IS_NULL;
+        return JsonError_ARRAY_IS_NULL;
     }
     *out_len = array->elements_count;
+    return JsonError_NONE;
+}
+
+JsonError json_array_get_element_at_index(
+    JsonArray array_handle,
+    size_t index,
+    JsonElement* value
+) {
+    JsonArray_t* array = (JsonArray_t*)array_handle;
+    if (array == 0) {
+        return JsonError_ARRAY_IS_NULL;
+    }
+    if (index >= array->elements_count){
+        return JsonError_INDEX_OUT_OF_BOUNDS;
+    }
+
+    *value = array->elements[index];
     return JsonError_NONE;
 }

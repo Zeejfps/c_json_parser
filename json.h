@@ -14,7 +14,8 @@ typedef enum JsonError {
     JsonError_UNKNOWN_ERROR,
     JsonError_PARSER_ERROR,
     JsonError_ELEMENT_KIND_MISSMATCH,
-    JsonError_ELEMENT_IS_NULL,
+    JsonError_ARRAY_IS_NULL,
+    JsonError_INDEX_OUT_OF_BOUNDS,
     JsonError_OBJECT_PROPERTY_NOT_FOUND,
 } JsonError;
 
@@ -65,6 +66,12 @@ JsonError json_object_get_property_by_name(
 JsonError json_array_get_length(
     JsonArray array,
     size_t* out_len
+);
+
+JsonError json_array_get_element_at_index(
+    JsonArray array,
+    size_t index,
+    JsonElement* value
 );
 
 #endif
