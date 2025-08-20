@@ -44,6 +44,9 @@ typedef struct JsonDoc_t {
     JsonElement root;
 } JsonDoc_t;
 
+JsonError parse_object(JsonParser_t* parser, FILE* file, JsonObject_t* object);
+JsonError parse_array(JsonParser_t* parser, FILE* file, JsonArray_t* array);
+
 JsonError json_doc_create(JsonDoc* docHandle) {
     JsonDoc_t* doc = (JsonDoc_t*)calloc(1, sizeof(JsonDoc_t));
     *docHandle = doc;
@@ -209,12 +212,28 @@ JsonError parse_element(JsonParser_t* parser, FILE* file, JsonElement_t* element
             printf("Property Value: %f\n", value);
             return JsonError_NONE;
         }
-        //     else if (c == '[') {
-        //         parser.state = JsonParserState_READ_ARRAY;
-        //     }
-        //     else if (c == '{') {
-        //         parser.state = JsonParserState_READ_OBJECT;
-        //     }
+        else if (c == '[') {
+            JsonArray_t* arr = create_array();
+            JsonError err = parse_array(parser, file, arr);
+            if (err != JsonError_NONE) {
+                printf("Failed to parse array\n");
+                return err;
+            }
+            element->value.array_value = arr;
+            printf("Value is Array\n");
+            return JsonError_NONE;
+        }
+        else if (c == '{') {
+            JsonObject_t* obj = create_object();
+            JsonError err = parse_object(parser, file, obj);
+            if (err != JsonError_NONE) {
+                printf("Failed to parse object\n");
+                return err;
+            }
+            element->value.obj_value = obj;
+            printf("Value is OBJ\n");
+            return JsonError_NONE;
+        }
     }
     return JsonError_PARSER_ERROR;
 }
@@ -264,7 +283,7 @@ JsonError parse_object(JsonParser_t* parser, FILE* file, JsonObject_t* object) {
 }
 
 JsonError parse_array(JsonParser_t* parser, FILE* file, JsonArray_t* array) {
-
+    return JsonError_PARSER_ERROR;
 }
 
 JsonError json_parse_file(
@@ -304,23 +323,6 @@ JsonError json_parse_file(
             printf("Json file must start with a root object or array");
             return JsonError_PARSER_ERROR;
         }
-        // case JsonParserState_READ_ELEMENT:
-        //     if (c == '"') {
-        //         parser.state = JsonParserState_READ_STRING;
-        //     }
-        //     else if (c == 't' || c == 'f' || c == 'n') {
-        //         parser.state = JsonParserState_READ_ELEMENT_LITERAL;
-        //     }
-        //     else if (c >= '0' && c <= '9') {
-        //         parser.state = JsonParserState_READ_ELEMENT_NUMBER;
-        //     }
-        //     else if (c == '[') {
-        //         parser.state = JsonParserState_READ_ARRAY;
-        //     }
-        //     else if (c == '{') {
-        //         parser.state = JsonParserState_READ_OBJECT;
-        //     }
-        //     break;
     }
 
     doc->root = root_element;
