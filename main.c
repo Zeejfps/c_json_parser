@@ -37,7 +37,18 @@ int main() {
     char* name_prop_value;
     json_element_get_value_string(name_prop, &name_prop_value);
 
-    printf("Name Prop Value: '%s'", name_prop_value);
+    printf("Name Prop Value: '%s'\n", name_prop_value);
+
+    JsonElement tags_prop;
+    json_object_get_property_by_name(root_obj, "tags", &tags_prop);
+
+    JsonArray tags_array;
+    json_element_get_value_array(tags_prop, &tags_array);
+
+    size_t tags_count;
+    json_array_get_length(tags_array, &tags_count);
+
+    printf("Tags count: %zu\n", tags_count);
 
     json_doc_destroy(&doc);
 
