@@ -81,6 +81,16 @@ JsonObject_t* create_object() {
     return obj;
 }
 
+int read_token(FILE* file) {
+    int c;
+    while ((c = fgetc(file)) != EOF) {
+        if (c != ' ' && c != '\r' && c != '\n'){
+            return c;
+        }
+    }
+    return c;
+}
+
 JsonError parser_begin_write(JsonParser_t* parser) {
     parser->write_head = 0;
     return JsonError_NONE;
@@ -180,7 +190,7 @@ JsonError parse_element(JsonParser_t* parser, FILE* file, JsonElement_t* element
                 return err;
             }
             element->value.str_value = value;
-            printf("Property Value: %s\n", value);
+            printf("Element Value: %s\n", value);
             return JsonError_NONE;
         }
         else if (c == 't' || c == 'f' || c == 'n') {
@@ -191,17 +201,17 @@ JsonError parse_element(JsonParser_t* parser, FILE* file, JsonElement_t* element
 
             if (strcmp(parser->buffer, "true") == 0) {
                 element->value.bool_value = 1;
-                printf("Property Value: true\n");
+                printf("Element Value: true\n");
                 return JsonError_NONE;
             }
             else if (strcmp(parser->buffer, "false") == 0) {
                 element->value.bool_value = 0;
-                printf("Property Value: false\n");
+                printf("Element Value: false\n");
                 return JsonError_NONE;
             }
             else if (strcmp(parser->buffer, "null") == 0) {
                 element->value.is_null = 1;
-                printf("Property Value: null\n");
+                printf("Element Value: null\n");
                 return JsonError_NONE;
             }
             printf("Unknown litteral: %s\n", parser->buffer);
@@ -221,7 +231,7 @@ JsonError parse_element(JsonParser_t* parser, FILE* file, JsonElement_t* element
             return JsonError_NONE;
         }
         else if (c == '[') {
-            printf("Parsing array\n");
+            printf("we know we are here\n");
             JsonArray_t* arr = create_array();
             JsonError err = parse_array(parser, file, arr);
             if (err != JsonError_NONE) {
@@ -243,11 +253,15 @@ JsonError parse_element(JsonParser_t* parser, FILE* file, JsonElement_t* element
             printf("Value is OBJ\n");
             return JsonError_NONE;
         }
+        else if (c == ']'){
+            return JsonError_NONE;
+        }
     }
     return JsonError_PARSER_ERROR;
 }
 
 JsonError parse_object(JsonParser_t* parser, FILE* file, JsonObject_t* object) {
+    printf("parsing object\n");
     int c;
     while ((c = fgetc(file)) != EOF) {
         if (c == '"') {
@@ -278,6 +292,7 @@ JsonError parse_object(JsonParser_t* parser, FILE* file, JsonObject_t* object) {
             object->property_values[property_index] = element;
         }
         else if (c == '}') {
+            printf("Finished parsing object\n");
             return JsonError_NONE;
         }
         else if (c == ',') {
@@ -292,10 +307,11 @@ JsonError parse_object(JsonParser_t* parser, FILE* file, JsonObject_t* object) {
 }
 
 JsonError parse_array(JsonParser_t* parser, FILE* file, JsonArray_t* array) {
-
+    printf("Parsing array...\n");
     int c;
-    while ((c = fgetc(file)) != EOF) {
+    while ((c = read_token(file)) != EOF) {
         if (c == ']') {
+            printf("Finished parsing array\n");
             return JsonError_NONE;
         }
 

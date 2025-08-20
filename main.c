@@ -4,7 +4,7 @@
 #include "json.h"
 
 int main() {
-    FILE* file = fopen("sample.json", "r");
+    FILE* file = fopen("simple.json", "r");
     if (file == 0){
         printf("Failed to open file\n");
         return 1;

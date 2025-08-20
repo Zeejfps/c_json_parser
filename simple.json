@@ -1,0 +1,23 @@
+{
+  "name":"Sample JSON",
+  "users": [
+    {
+      "id": 1,
+      "username": "alice",
+      "roles": ["admin", "editor"],
+      "profile": {
+        "email": "alice@example.com",
+        "age": 30
+      }
+    },
+    {
+      "id": 2,
+      "username": "bob",
+      "roles": ["viewer"],
+      "profile": {
+        "email": "bob@example.com",
+        "age": 25
+      }
+    }
+  ]
+}
