@@ -6,18 +6,17 @@
 
 typedef void* JsonDoc;
 typedef void* JsonElement;
+typedef void* JsonObject;
+typedef void* JsonArray;
 
 typedef enum JsonError { 
-    NONE, 
-    UNKNOWN_ERROR,
-    OUT_OF_PARSERS
+    JsonError_NONE, 
+    JsonError_UNKNOWN_ERROR,
+    JsonError_PARSER_ERROR,
 } JsonError;
 
 JsonError json_doc_create(JsonDoc* doc);
 void json_doc_destroy(JsonDoc* doc);
-
-JsonError json_element_create(JsonElement* element, JsonDoc doc);
-void json_element_destroy(JsonElement* element);
 
 JsonError json_parse_file(
     JsonDoc doc, 
