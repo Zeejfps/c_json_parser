@@ -48,6 +48,14 @@ typedef struct JsonDoc_t {
 JsonError parse_object(JsonParser_t* parser, FILE* file, JsonObject_t* object);
 JsonError parse_array(JsonParser_t* parser, FILE* file, JsonArray_t* array);
 
+JsonElement_t* element_create();
+void element_destroy(JsonElement_t* element);
+
+JsonArray_t* array_create();
+void array_destroy(JsonArray_t* array);
+
+void object_destroy(JsonObject_t* obj);
+
 JsonDoc_t* doc_create() {
     JsonDoc_t* doc = (JsonDoc_t*)calloc(1, sizeof(JsonDoc_t));
     return doc;
@@ -81,34 +89,25 @@ JsonElement_t* element_create() {
     return (JsonElement_t*)calloc(1, sizeof(JsonElement_t));
 }
 
-element_destroy(JsonElement_t* element) {
+void element_destroy(JsonElement_t* element) {
     if (element == 0) {
         return;
     }
 
-    switch (element->kind)
-    {
-    
-    case JsonElementKind_ARRAY:
-        JsonArray_t* arr = (JsonArray_t*)element->value.array_value;
+    if (element->kind == JsonElementKind_ARRAY) {
+        JsonArray_t* arr = (JsonArray_t*)(element->value.array_value);
         array_destroy(arr);
         element->value.array_value = 0;
-        break;
-    
-    case JsonElementKind_OBJECT:
-        JsonObject_t* obj = (JsonObject_t*)element->value.obj_value;
+    }
+    else if (element->kind == JsonElementKind_OBJECT) {
+        JsonObject_t* obj = (JsonObject_t*)(element->value.obj_value);
         object_destroy(obj);
         element->value.obj_value = 0;
-        break;
-
-    case JsonElementKind_STRING:
+    }
+    else if (element->kind == JsonElementKind_STRING) {
         char* str = element->value.str_value;
         free(str);
         element->value.str_value = 0;
-        break;
-
-    default:
-        break;
     }
 
     free(element);
@@ -120,7 +119,7 @@ JsonArray_t* array_create() {
     return array;
 }
 
-void array_destroy(JsonArray_t* array){
+void array_destroy(JsonArray_t* array) {
     if (array == 0) {
         return;
     }
@@ -459,33 +458,44 @@ JsonError json_parse_file(
     return JsonError_NONE;
 }
 
-JsonError json_get_root_element(
-    JsonDoc docHandle, 
+JsonError json_doc_get_root_element(
+    JsonDoc doc_handle, 
     JsonElement* out_root
 ) {
-    JsonDoc_t* doc = (JsonDoc_t*)docHandle;
+    JsonDoc_t* doc = (JsonDoc_t*)doc_handle;
     *out_root = doc->root;
     return JsonError_NONE;
 }
 
-JsonError json_get_element_child_by_name(
-    JsonDoc doc, 
-    JsonElement parent, 
+JsonError json_element_get_object_value(
+    JsonElement element_handle,
+    JsonObject* out_object
+) {
+    JsonElement_t* element = (JsonElement_t*)element_handle;
+    if (element->kind != JsonElementKind_OBJECT) {
+        return JsonError_ELEMENT_KIND_MISSMATCH;
+    }
+    *out_object = element->value.obj_value;
+    return JsonError_NONE;
+}
+
+JsonError json_object_get_property_by_name(
+    JsonObject objHandle, 
     const char* name,
-    JsonElement* out_child
+    JsonElement* out_property
 ) {
     return JsonError_NONE;
 }
 
-JsonError json_get_element_value_str(
+JsonError json_element_get_value_str(
     JsonDoc doc,
     JsonElement element,
-    const char* out_value
+    char** out_value
 ){
     return JsonError_NONE;
 }
 
-JsonError json_get_element_value_str_len(
+JsonError json_element_get_value_str_len(
     JsonDoc doc,
     JsonElement element, 
     u_int32_t* len

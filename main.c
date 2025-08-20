@@ -22,7 +22,15 @@ int main() {
     }
 
     JsonElement root;
-    json_get_root_element(doc, &root);
+    json_doc_get_root_element(doc, &root);
+
+    JsonObject rootObj;
+    json_element_get_object_value(root, &rootObj);
+
+    JsonElement nameProp;
+    json_object_get_property_by_name(rootObj, "name", &nameProp);
+
+    
 
     json_doc_destroy(&doc);
 

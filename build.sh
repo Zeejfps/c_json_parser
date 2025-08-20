@@ -2,4 +2,3 @@
 
 gcc main.c json.c
 
-./a.out

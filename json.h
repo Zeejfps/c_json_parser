@@ -13,6 +13,7 @@ typedef enum JsonError {
     JsonError_NONE, 
     JsonError_UNKNOWN_ERROR,
     JsonError_PARSER_ERROR,
+    JsonError_ELEMENT_KIND_MISSMATCH,
 } JsonError;
 
 JsonError json_doc_create(JsonDoc* doc);
@@ -23,28 +24,32 @@ JsonError json_parse_file(
     FILE* file
 );
 
-JsonError json_get_root_element(
+JsonError json_doc_get_root_element(
     JsonDoc doc, 
     JsonElement* out_root
 );
 
-JsonError json_get_element_child_by_name(
-    JsonDoc doc, 
-    JsonElement parent, 
-    const char* name,
-    JsonElement* out_child
+JsonError json_element_get_object_value(
+    JsonElement element,
+    JsonObject* out_object
 );
 
-JsonError json_get_element_value_str(
+JsonError json_element_get_value_str(
     JsonDoc doc,
     JsonElement element,
-    const char* out_value
+    char** out_value
 );
 
-JsonError json_get_element_value_str_len(
+JsonError json_element_get_value_str_len(
     JsonDoc doc,
     JsonElement element, 
     u_int32_t* len
+);
+
+JsonError json_object_get_property_by_name(
+    JsonObject obj, 
+    const char* name,
+    JsonElement* out_property
 );
 
 #endif
