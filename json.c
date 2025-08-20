@@ -416,6 +416,8 @@ JsonError json_get_root_element(
     JsonDoc docHandle, 
     JsonElement* out_root
 ) {
+    JsonDoc_t* doc = (JsonDoc_t*)docHandle;
+    *out_root = doc->root;
     return JsonError_NONE;
 }
 

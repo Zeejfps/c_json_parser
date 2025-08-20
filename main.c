@@ -14,20 +14,17 @@ int main() {
     json_doc_create(&doc);
 
     JsonError result = json_parse_file(doc, file);
-    
-    json_doc_destroy(&doc);
 
-    if (result == JsonError_NONE) {
-        printf("Successfully parsed file!");
-    }
-    else {
+    if (result != JsonError_NONE) {
         printf("Error parsing file: %d", result);
+        json_doc_destroy(&doc);
+        return 1;
     }
 
-    // JsonElement root;
-    // json_element_create(&root, doc);
-    
-    // json_get_root_element(doc, &root);
+    JsonElement root;
+    json_get_root_element(doc, &root);
+
+    json_doc_destroy(&doc);
 
     // JsonElement child;
     // json_element_create(&child, doc);
