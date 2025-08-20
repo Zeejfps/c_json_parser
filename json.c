@@ -155,16 +155,16 @@ JsonError read_name_value_separator(JsonParser_t* parser, FILE* file) {
 }
 
 JsonError parse_number(JsonParser_t* parser, FILE* file, float* value) {
+    printf("parsing_number");
     int c;
     while ((c = fgetc(file)) != EOF) {
-        if (c == ' ') {
-            continue;
-        }
         if (c != '.' && (c < '0' || c > '9')) {
+            ungetc(c, file);
             parser->buffer[parser->write_head] = '\0';
             char *end;
             *value = strtof(parser->buffer, &end);
             if (parser->buffer == end) {
+                printf("Failed to parse float\n");
                 return JsonError_PARSER_ERROR;
             }
             return JsonError_NONE;
