@@ -1,66 +1,58 @@
-#ifndef PARSER_H
-#define PARSER_H
+#ifndef JSON_H
+#define JSON_H
 
-#include<stdio.h>
+#include <stdio.h>
 #include <stdint.h>
 
-typedef void* Json_Parser;
-typedef void* Json_Doc;
-typedef void* Json_Element;
+typedef void* JsonParser;
+typedef void* JsonDoc;
+typedef void* JsonElement;
 
-typedef struct Json_Parse_Result {
-    enum Json_Parse_Error { NONE, UNKNOWN_ERROR } error;
-    Json_Parse_Error error;
-    Json_Doc doc;
-} Json_Parse_Result;
+typedef enum JsonError { 
+    NONE, 
+    UNKNOWN_ERROR,
+    OUT_OF_PARSERS
+} JsonError;
 
-typedef struct Json_Get_Element_Child_By_Name_Result {
-    enum Json_Get_Child_By_Name_Error { NONE, UNKNOWN_ERROR };
-    Json_Get_Child_By_Name_Error error;
-    Json_Element element;
-} Json_Get_Element_Child_By_Name_Result;
+JsonError json_init();
 
-typedef struct Json_Get_Element_Value_Str_Len_Result
-{
-    enum Json_Get_Child_By_Name_Error { NONE, UNKNOWN_ERROR, ELEMENT_NOT_STRING };
-    Json_Get_Child_By_Name_Error error;
-    u_int32_t length;
-} Json_Get_Element_Value_Str_Len_Result;
+JsonError json_parser_create(JsonParser* parser);
+void json_parser_destroy(JsonParser* parser);
 
-typedef struct Json_Get_Element_Value_Str_Result
-{
-    enum Json_Get_Child_By_Name_Error { NONE, UNKNOWN_ERROR, ELEMENT_NOT_STRING };
-    Json_Get_Child_By_Name_Error error;
-};
+JsonError json_doc_create(JsonDoc* doc);
+void json_doc_destroy(JsonDoc* doc);
 
+JsonError json_element_create(JsonElement* element, JsonDoc doc);
+void json_element_destroy(JsonElement* element);
 
-Json_Parser json_parser_create();
-void json_parser_destroy(Json_Parser parser);
-Json_Parse_Result json_parser_parse_file(Json_Parser parser, FILE* file);
-
-Json_Element 
-json_doc_get_root(
-    Json_Doc doc
+JsonError json_parse_file(
+    JsonParser parser,
+    JsonDoc doc, 
+    FILE* file
 );
 
-Json_Get_Element_Child_By_Name_Result 
-json_get_element_child_by_name(
-    Json_Doc doc, 
-    Json_Element parent, 
-    const char* name
+JsonError json_get_root_element(
+    JsonDoc doc, 
+    JsonElement* out_root
 );
 
-Json_Get_Element_Value_Str_Len_Result
-json_get_element_value_str_len(
-    Json_Doc doc, 
-    Json_Element element
+JsonError json_get_element_child_by_name(
+    JsonDoc doc, 
+    JsonElement parent, 
+    const char* name,
+    JsonElement* out_child
 );
 
-Json_Get_Element_Value_Str_Result
-json_get_element_value_str(
-    Json_Doc doc, 
-    Json_Element element,
-    const char* buffer
+JsonError json_get_element_value_str(
+    JsonDoc doc,
+    JsonElement element,
+    const char* out_value
+);
+
+JsonError json_get_element_value_str_len(
+    JsonDoc doc,
+    JsonElement element, 
+    u_int32_t* len
 );
 
 #endif

@@ -1,44 +1,44 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdint.h>
 #include "json.h"
 
 int main() {
-    FILE* stream = fopen("settings.json", "r");
+    FILE* stream = fopen("sample.json", "r");
     if (stream == 0){
         printf("Failed to open file\n");
         return 1;
     }
 
-    Json_Parser parser = json_parser_create();
-    Json_Parse_Result result = json_parser_parse_file(parser, stream);
-    if (result.error != NONE) {
-        printf('Failed to parse json\n');
-        json_parser_destroy(parser);
-        return 1;
-    }
-    Json_Doc doc = result.doc;
+    JsonParser parser;
+    json_parser_create(&parser);
 
-    Json_Element root = json_doc_get_root(doc);
-    Json_Get_Element_Child_By_Name_Result get_child_by_name_result =
-        json_get_element_child_by_name(doc, root, "name");
+    JsonDoc doc;
+    json_doc_create(&doc);
 
-    if (get_child_by_name_result.error != NONE) {
-        printf("Failed to get child with name %s\n", "name");
-        json_parser_destroy(parser);
-        return 1;
-    }
+    json_parse_file(parser, doc, stream);
+    
+    json_parser_destroy(&parser);
 
-    Json_Get_Element_Value_Str_Len_Result get_element_value_str_len_result = 
-        json_get_element_value_str_len(doc, get_child_by_name_result.element);
-    if (get_element_value_str_len_result.error != NONE) {
-        printf("Failed to get element value string length");
-        json_parser_destroy(parser);
-        return 1;
-    }
+    JsonElement root;
+    json_element_create(&root, doc);
+    
+    json_get_root_element(doc, &root);
 
-    char* element_value = (char*)calloc(get_element_value_str_len_result.length + 1, sizeof(char));
+    JsonElement child;
+    json_element_create(&child, doc);
 
-    json_parser_destroy(parser);
+    json_get_element_child_by_name(doc, root, "name", &child);
+
+    u_int32_t len;
+    json_get_element_value_str_len(doc, child, &len);
+
+    char* name = (char*)calloc(len + 1, sizeof(char));
+    json_get_element_value_str(doc, child, name);
+
+    json_element_destroy(root);
+
+    json_doc_destroy(doc);
 
     return 0;
 }
