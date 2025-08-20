@@ -24,13 +24,14 @@ int main() {
     JsonElement root;
     json_doc_get_root_element(doc, &root);
 
-    JsonObject rootObj;
-    json_element_get_object_value(root, &rootObj);
+    JsonObject root_obj;
+    json_element_get_object_value(root, &root_obj);
 
-    JsonElement nameProp;
-    json_object_get_property_by_name(rootObj, "name", &nameProp);
+    JsonElement name_prop;
+    json_object_get_property_by_name(root_obj, "name", &name_prop);
 
-    
+    char* name_prop_value;
+    json_element_get_value_str(name_prop, &name_prop_value);
 
     json_doc_destroy(&doc);
 

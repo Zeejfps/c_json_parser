@@ -480,15 +480,22 @@ JsonError json_element_get_object_value(
 }
 
 JsonError json_object_get_property_by_name(
-    JsonObject objHandle, 
+    JsonObject obj_handle, 
     const char* name,
     JsonElement* out_property
 ) {
-    return JsonError_NONE;
+    JsonObject_t* obj = (JsonObject_t*)obj_handle;
+    for (int i = 0; i < obj->property_count; i++) {
+        char* prop_name = obj->property_names[i];
+        if (strcmp(name, prop_name) == 0) {
+            *out_property = obj->property_values[i];
+            return JsonError_NONE;
+        }
+    }
+    return JsonError_OBJECT_PROPERTY_NOT_FOUND;
 }
 
 JsonError json_element_get_value_str(
-    JsonDoc doc,
     JsonElement element,
     char** out_value
 ){

@@ -14,6 +14,7 @@ typedef enum JsonError {
     JsonError_UNKNOWN_ERROR,
     JsonError_PARSER_ERROR,
     JsonError_ELEMENT_KIND_MISSMATCH,
+    JsonError_OBJECT_PROPERTY_NOT_FOUND,
 } JsonError;
 
 JsonError json_doc_create(JsonDoc* doc);
@@ -35,7 +36,6 @@ JsonError json_element_get_object_value(
 );
 
 JsonError json_element_get_value_str(
-    JsonDoc doc,
     JsonElement element,
     char** out_value
 );
