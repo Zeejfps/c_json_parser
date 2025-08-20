@@ -2,6 +2,7 @@
   "name": "Sample JSON",
   "version": 1.0,
   "active": true,
+  "empy": {},
   "tags": ["parser", "test", "json", "example"],
   "nullValue": null,
   "count": 42,
