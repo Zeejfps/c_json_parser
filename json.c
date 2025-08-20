@@ -7,20 +7,31 @@ typedef struct JsonParser_t {
     u_int32_t test;
 } JsonParser_t;
 
+typedef struct JsonDoc_t {
+    u_int32_t test;
+} JsonDoc_t;
 
 JsonError json_parser_create(JsonParser* parserHandle) {
+    if (parserHandle == 0) {
+        return NONE;
+    }
     JsonParser_t* parser = (JsonParser_t*)calloc(1, sizeof(JsonParser_t));
-    parserHandle = parser;
+    *parserHandle = parser;
     return NONE;
 }
 
 void json_parser_destroy(JsonParser* parserHandle) {
+    if (parserHandle == 0){
+        return;
+    }
     JsonParser_t* parser = (JsonParser_t*)(*parserHandle);
     free(parser);
-    parserHandle = 0;
+    *parserHandle = 0;
 }
 
 JsonError json_doc_create(JsonDoc* docHandle) {
+    JsonDoc_t* doc = (JsonDoc_t*)calloc(1, sizeof(JsonDoc_t));
+    *docHandle = doc;
     return NONE;
 }
 

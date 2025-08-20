@@ -10,35 +10,36 @@ int main() {
         return 1;
     }
 
-    JsonParser parser;
+    JsonParser parser = 0;
     json_parser_create(&parser);
 
     JsonDoc doc;
     json_doc_create(&doc);
 
-    json_parse_file(parser, doc, stream);
+    // json_parse_file(parser, doc, stream);
     
     json_parser_destroy(&parser);
 
-    JsonElement root;
-    json_element_create(&root, doc);
+
+    // JsonElement root;
+    // json_element_create(&root, doc);
     
-    json_get_root_element(doc, &root);
+    // json_get_root_element(doc, &root);
 
-    JsonElement child;
-    json_element_create(&child, doc);
+    // JsonElement child;
+    // json_element_create(&child, doc);
 
-    json_get_element_child_by_name(doc, root, "name", &child);
+    // json_get_element_child_by_name(doc, root, "name", &child);
 
-    u_int32_t len;
-    json_get_element_value_str_len(doc, child, &len);
+    // u_int32_t len;
+    // json_get_element_value_str_len(doc, child, &len);
 
-    char* name = (char*)calloc(len + 1, sizeof(char));
-    json_get_element_value_str(doc, child, name);
+    // char* name = (char*)calloc(len + 1, sizeof(char));
+    // json_get_element_value_str(doc, child, name);
 
-    json_element_destroy(root);
+    // json_element_destroy(root);
 
-    json_doc_destroy(doc);
+    // json_doc_destroy(doc);
 
     return 0;
 }

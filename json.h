@@ -14,8 +14,6 @@ typedef enum JsonError {
     OUT_OF_PARSERS
 } JsonError;
 
-JsonError json_init();
-
 JsonError json_parser_create(JsonParser* parser);
 void json_parser_destroy(JsonParser* parser);
 
