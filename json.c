@@ -284,19 +284,19 @@ JsonError parse_element(JsonParser_t* parser, FILE* file, JsonElement_t* element
             if (strcmp(parser->buffer, "true") == 0) {
                 element->kind = JsonElementKind_BOOLEAN;
                 element->value.bool_value = 1;
-                printf("Element Value: true\n");
+                //printf("Element Value: true\n");
                 return JsonError_NONE;
             }
             else if (strcmp(parser->buffer, "false") == 0) {
                 element->kind = JsonElementKind_BOOLEAN;
                 element->value.bool_value = 0;
-                printf("Element Value: false\n");
+                //printf("Element Value: false\n");
                 return JsonError_NONE;
             }
             else if (strcmp(parser->buffer, "null") == 0) {
                 element->kind = JsonElementKind_NULL;
                 element->value.is_null = 1; // Do i need this?
-                printf("Element Value: null\n");
+                //printf("Element Value: null\n");
                 return JsonError_NONE;
             }
             printf("Unknown litteral: %s\n", parser->buffer);
@@ -416,8 +416,6 @@ JsonError json_parse_file(
     JsonDoc docHandle, 
     FILE* file
 ) {
-    //TODO: Error Check
-
     JsonParser_t parser = {0};
     JsonDoc_t* doc = (JsonDoc_t*)docHandle; 
     JsonElement_t* root_element = element_create();
@@ -428,6 +426,8 @@ JsonError json_parse_file(
             JsonObject_t* obj = object_create();
             JsonError err = parse_object(&parser, file, obj);
             if (err != JsonError_NONE) {
+                object_destroy(obj);
+                element_destroy(root_element);
                 printf("Failed to parse obj\n");
                 return err;
             }
@@ -436,13 +436,16 @@ JsonError json_parse_file(
             break;
         }
         else if (c == '[') {
-            JsonArray_t* arr = array_create();
-            JsonError err = parse_array(&parser, file, arr);
+            JsonArray_t* array = array_create();
+            JsonError err = parse_array(&parser, file, array);
             if (err != JsonError_NONE) {
+                array_destroy(array);
+                element_destroy(root_element);
+                printf("Failed to parse array\n");
                 return err;
             }
             root_element->kind = JsonElementKind_ARRAY;
-            root_element->value.array_value = arr;
+            root_element->value.array_value = array;
             break;
         }
         else {
