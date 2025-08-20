@@ -45,17 +45,17 @@ typedef struct JsonDoc_t {
     JsonElement root;
 } JsonDoc_t;
 
-JsonError parse_object(JsonParser_t* parser, FILE* file, JsonObject_t* object);
-JsonError parse_array(JsonParser_t* parser, FILE* file, JsonArray_t* array);
+static JsonError parse_object(JsonParser_t* parser, FILE* file, JsonObject_t* object);
+static JsonError parse_array(JsonParser_t* parser, FILE* file, JsonArray_t* array);
 
-JsonElement_t* element_create();
-void element_destroy(JsonElement_t* element);
+static JsonElement_t* element_create();
+static void element_destroy(JsonElement_t* element);
 
-JsonArray_t* array_create();
-void array_destroy(JsonArray_t* array);
+static JsonArray_t* array_create();
+static void array_destroy(JsonArray_t* array);
 
-JsonObject_t* object_create();
-void object_destroy(JsonObject_t* obj);
+static JsonObject_t* object_create();
+static void object_destroy(JsonObject_t* obj);
 
 JsonDoc_t* doc_create() {
     JsonDoc_t* doc = (JsonDoc_t*)calloc(1, sizeof(JsonDoc_t));
@@ -541,5 +541,17 @@ JsonError json_element_get_value_array(
         return JsonError_ELEMENT_KIND_MISSMATCH;
     }
     *out_value = element->value.array_value;
+    return JsonError_NONE;
+}
+
+JsonError json_array_get_length(
+    JsonArray array_handle,
+    size_t* out_len
+) {
+    JsonArray_t* array = (JsonArray_t*)array_handle;
+    if (array == 0) {
+        return JsonError_ELEMENT_IS_NULL;
+    }
+    *out_len = array->elements_count;
     return JsonError_NONE;
 }
