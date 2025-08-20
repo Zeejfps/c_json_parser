@@ -18,7 +18,7 @@ int main() {
     json_doc_destroy(&doc);
 
     if (result == JsonError_NONE) {
-        printf("successfully parsed file!");
+        printf("Successfully parsed file!");
     }
     else {
         printf("Error parsing file: %d", result);

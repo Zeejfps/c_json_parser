@@ -54,7 +54,9 @@ JsonError json_doc_create(JsonDoc* docHandle) {
 }
 
 void json_doc_destroy(JsonDoc* docHandle) {
-    docHandle = 0;
+    JsonDoc_t* doc = *docHandle;
+    free(doc);
+    *docHandle = 0;
 }
 
 JsonError json_element_create(JsonElement* elementHandle, JsonDoc doc) {
