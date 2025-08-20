@@ -9,9 +9,12 @@ typedef struct JsonParser_t {
         JsonParserState_READING_OBJECT_ELEMENT,
         JsonParserState_READING_ARRAY_ELEMENT,
         JsonParserState_READING_PROPERTY_NAME,
-        JsonParserState_READING_KEY_VALUE_SEPARATOR,
+        JsonParserState_READING_PROPERTY_NAME_VALUE_SEPARATOR,
         JsonParserState_READING_PROPERTY_VALUE,
         JsonParserState_READING_PROPERTY_VALUE_STRING,
+        JsonParserState_READING_PROPERTY_VALUE_BOOLEAN,
+        JsonParserState_READING_PROPERTY_VALUE_NULL,
+        JsonParserState_READING_PROPERTY_VALUE_NUMBER,
         JsonParserState_READING_PROPERTY_SEPARATOR,
     } state;
     u_int32_t test;
@@ -78,11 +81,11 @@ JsonError json_parse_file(
 
         case JsonParserState_READING_PROPERTY_NAME:
             if (c == '"') {
-                parser.state = JsonParserState_READING_KEY_VALUE_SEPARATOR;
+                parser.state = JsonParserState_READING_PROPERTY_NAME_VALUE_SEPARATOR;
             }
             break;
         
-        case JsonParserState_READING_KEY_VALUE_SEPARATOR:
+        case JsonParserState_READING_PROPERTY_NAME_VALUE_SEPARATOR:
             if (c == ':') {
                 parser.state = JsonParserState_READING_PROPERTY_VALUE;
             }
@@ -91,6 +94,18 @@ JsonError json_parse_file(
         case JsonParserState_READING_PROPERTY_VALUE:
             if (c == '"') {
                 parser.state = JsonParserState_READING_PROPERTY_VALUE_STRING;
+            }
+            else if (c == 't') {
+                parser.state = JsonParserState_READING_PROPERTY_VALUE_BOOLEAN;
+            }
+            else if (c == 'f') {
+                parser.state = JsonParserState_READING_PROPERTY_VALUE_BOOLEAN;
+            }
+            else if (c == 'n') {
+                parser.state = JsonParserState_READING_PROPERTY_VALUE_NULL;
+            }
+            else if (c >= '0' && c <= '9') {
+                parser.state = JsonParserState_READING_PROPERTY_VALUE_NUMBER;
             }
             break;
 
@@ -106,6 +121,22 @@ JsonError json_parse_file(
             }
             else if (c == '}') {
                 
+            }
+            break;
+
+        case JsonParserState_READING_PROPERTY_VALUE_BOOLEAN:
+            if (c == ' '){
+                //TODO: check if its true or false
+                parser.state = JsonParserState_READING_PROPERTY_SEPARATOR;
+            }
+            else if (c == ',') {
+                parser.state = JsonParserState_READING_OBJECT_ELEMENT;
+            }
+            else if (c == '}') {
+                    
+            }
+            else {
+
             }
             break;
 
