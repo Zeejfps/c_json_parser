@@ -3,6 +3,7 @@
 #include "json.h"
 
 #define MAX_OBJECT_PROPERTY_COUNT 50
+#define MAX_ARRAY_ELEMENTS_COUNT 50
 
 typedef struct JsonParser_t {
     char buffer[256];
@@ -36,8 +37,8 @@ typedef struct JsonObject_t {
 } JsonObject_t;
 
 typedef struct JsonArray_t {
-    JsonElement* values;
-    size_t value_count;
+    JsonElement* elements;
+    size_t elements_count;
 } JsonArray_t;
 
 typedef struct JsonDoc_t {
@@ -68,19 +69,53 @@ void json_element_destroy(JsonElement_t* element) {
     element = 0;
 }
 
-JsonElement_t* create_element() {
+JsonElement_t* element_create() {
     return (JsonElement_t*)calloc(1, sizeof(JsonElement_t));
 }
 
-JsonArray_t* create_array() {
-    return (JsonArray_t*)calloc(1, sizeof(JsonArray_t));
+element_destroy(JsonElement_t* element) {
+
 }
 
-JsonObject_t* create_object() {
+JsonArray_t* array_create() {
+    JsonArray_t* array = (JsonArray_t*)calloc(1, sizeof(JsonArray_t));
+    array->elements = calloc(MAX_ARRAY_ELEMENTS_COUNT, sizeof(JsonElement_t*));
+    return array;
+}
+
+void array_destroy(JsonArray_t* array){
+    for (int i = 0; i < array->elements_count; i++) {
+        element_destroy(array->elements[i]);
+        array->elements[i] = 0;
+    }
+    free(array->elements);
+    array->elements = 0;
+
+    free(array);
+}
+
+JsonObject_t* object_create() {
     JsonObject_t* obj = (JsonObject_t*)calloc(1, sizeof(JsonObject_t));
     obj->property_names = calloc(MAX_OBJECT_PROPERTY_COUNT, sizeof(char*));
     obj->property_values = calloc(MAX_OBJECT_PROPERTY_COUNT, sizeof(JsonElement_t*));
     return obj;
+}
+
+void object_destroy(JsonObject_t* obj) {
+    for (int i = 0; i < obj->property_count; i++) {
+        free(obj->property_names[i]);
+        obj->property_names[i] = 0;
+
+        element_destroy(obj->property_values[i]);
+        obj->property_values[i] = 0;
+    }
+    free(obj->property_names);
+    obj->property_names = 0;
+
+    free(obj->property_values);
+    obj-> property_values = 0;
+
+    free(obj);
 }
 
 int read_token(FILE* file) {
@@ -234,7 +269,7 @@ JsonError parse_element(JsonParser_t* parser, FILE* file, JsonElement_t* element
         }
         else if (c == '[') {
             printf("we know we are here\n");
-            JsonArray_t* arr = create_array();
+            JsonArray_t* arr = array_create();
             JsonError err = parse_array(parser, file, arr);
             if (err != JsonError_NONE) {
                 printf("Failed to parse array\n");
@@ -245,7 +280,7 @@ JsonError parse_element(JsonParser_t* parser, FILE* file, JsonElement_t* element
             return JsonError_NONE;
         }
         else if (c == '{') {
-            JsonObject_t* obj = create_object();
+            JsonObject_t* obj = object_create();
             JsonError err = parse_object(parser, file, obj);
             if (err != JsonError_NONE) {
                 printf("Failed to parse object\n");
@@ -281,7 +316,7 @@ JsonError parse_object(JsonParser_t* parser, FILE* file, JsonObject_t* object) {
                 return err;
             }
 
-            JsonElement_t* element = create_element();
+            JsonElement_t* element = element_create();
             err = parse_element(parser, file, element);
             if (err != JsonError_NONE) {
                 printf("Failed to parse property value\n");
@@ -318,7 +353,7 @@ JsonError parse_array(JsonParser_t* parser, FILE* file, JsonArray_t* array) {
         }
 
         ungetc(c, file);
-        JsonElement_t* element = create_element();
+        JsonElement_t* element = element_create();
         JsonError err = parse_element(parser, file, element);
         if (err != JsonError_NONE) {
             return err;
@@ -335,13 +370,13 @@ JsonError json_parse_file(
 
     JsonParser_t parser = {0};
     JsonDoc_t* doc = (JsonDoc_t*)docHandle; 
-    JsonElement_t* root_element = create_element();
+    JsonElement_t* root_element = element_create();
 
     int c;
     while ((c = fgetc(file)) != EOF) {
 
         if (c == '{') {
-            JsonObject_t* obj = create_object();
+            JsonObject_t* obj = object_create();
             JsonError err = parse_object(&parser, file, obj);
             if (err != JsonError_NONE) {
                 printf("Failed to parse obj\n");
@@ -351,7 +386,7 @@ JsonError json_parse_file(
             break;
         }
         else if (c == '[') {
-            JsonArray_t* arr = create_array();
+            JsonArray_t* arr = array_create();
             JsonError err = parse_array(&parser, file, arr);
             if (err != JsonError_NONE) {
                 return err;
