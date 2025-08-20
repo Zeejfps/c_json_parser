@@ -531,3 +531,15 @@ JsonError json_element_get_value_number(
     *out_value = element->value.float_value;
     return JsonError_NONE;
 }
+
+JsonError json_element_get_value_array(
+    JsonElement element_handle,
+    JsonArray* out_value
+){
+    JsonElement_t* element = (JsonElement_t*)element_handle;
+    if (element->kind != JsonElementKind_ARRAY) {
+        return JsonError_ELEMENT_KIND_MISSMATCH;
+    }
+    *out_value = element->value.array_value;
+    return JsonError_NONE;
+}
