@@ -30,8 +30,14 @@ int main() {
     JsonElement name_prop;
     json_object_get_property_by_name(root_obj, "name", &name_prop);
 
+    if (name_prop == 0) {
+        printf("Failed to find property with name: %s", "name");
+    }
+
     char* name_prop_value;
     json_element_get_value_str(name_prop, &name_prop_value);
+
+    printf("Name Prop Value: '%s'", name_prop_value);
 
     json_doc_destroy(&doc);
 

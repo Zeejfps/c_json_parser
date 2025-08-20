@@ -270,6 +270,7 @@ JsonError parse_element(JsonParser_t* parser, FILE* file, JsonElement_t* element
             if (err != JsonError_NONE){
                 return err;
             }
+            element->kind = JsonElementKind_STRING;
             element->value.str_value = value;
             printf("Element Value: %s\n", value);
             return JsonError_NONE;
@@ -496,9 +497,14 @@ JsonError json_object_get_property_by_name(
 }
 
 JsonError json_element_get_value_str(
-    JsonElement element,
+    JsonElement element_handle,
     char** out_value
 ){
+    JsonElement_t* element = (JsonElement_t*)element_handle;
+    if (element->kind != JsonElementKind_STRING) {
+        return JsonError_ELEMENT_KIND_MISSMATCH;
+    }
+    *out_value = element->value.str_value;
     return JsonError_NONE;
 }
 
