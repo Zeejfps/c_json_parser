@@ -54,6 +54,7 @@ void element_destroy(JsonElement_t* element);
 JsonArray_t* array_create();
 void array_destroy(JsonArray_t* array);
 
+JsonObject_t* object_create();
 void object_destroy(JsonObject_t* obj);
 
 JsonDoc_t* doc_create() {
@@ -236,7 +237,7 @@ JsonError read_name_value_separator(JsonParser_t* parser, FILE* file) {
 }
 
 JsonError parse_number(JsonParser_t* parser, FILE* file, float* value) {
-    printf("parsing_number");
+    //printf("parsing_number");
     int c;
     while ((c = fgetc(file)) != EOF) {
         if (c != '.' && (c < '0' || c > '9')) {
@@ -264,7 +265,7 @@ JsonError parse_element(JsonParser_t* parser, FILE* file, JsonElement_t* element
     int c;
     while ((c = fgetc(file)) != EOF) {
         if (c == '"') {
-            printf("parsing string\n");
+            //printf("parsing string\n");
             char* value;
             JsonError err = parse_string(parser, file, &value);
             if (err != JsonError_NONE){
@@ -272,7 +273,7 @@ JsonError parse_element(JsonParser_t* parser, FILE* file, JsonElement_t* element
             }
             element->kind = JsonElementKind_STRING;
             element->value.str_value = value;
-            printf("Element Value: %s\n", value);
+            //printf("Element Value: %s\n", value);
             return JsonError_NONE;
         }
         else if (c == 't' || c == 'f' || c == 'n') {
@@ -313,11 +314,10 @@ JsonError parse_element(JsonParser_t* parser, FILE* file, JsonElement_t* element
             }
             element->kind = JsonElementKind_NUMBER;
             element->value.float_value = value;
-            printf("Property Value: %f\n", value);
+            //printf("Property Value: %f\n", value);
             return JsonError_NONE;
         }
         else if (c == '[') {
-            printf("we know we are here\n");
             JsonArray_t* arr = array_create();
             JsonError err = parse_array(parser, file, arr);
             if (err != JsonError_NONE) {
@@ -326,7 +326,7 @@ JsonError parse_element(JsonParser_t* parser, FILE* file, JsonElement_t* element
             }
             element->kind = JsonElementKind_ARRAY;
             element->value.array_value = arr;
-            printf("Value is Array\n");
+            //printf("Value is Array\n");
             return JsonError_NONE;
         }
         else if (c == '{') {
