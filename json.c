@@ -61,8 +61,9 @@ JsonError json_element_create(JsonElement* elementHandle, JsonDoc doc) {
     return JsonError_NONE;
 }
 
-void json_element_destroy(JsonElement* elementHandle) {
-    elementHandle = 0;
+void json_element_destroy(JsonElement_t* element) {
+    free(element);
+    element = 0;
 }
 
 JsonElement_t* create_element() {
@@ -82,6 +83,7 @@ JsonObject_t* create_object() {
 
 JsonError parser_begin_write(JsonParser_t* parser) {
     parser->write_head = 0;
+    return JsonError_NONE;
 }
 
 JsonError parser_end_write(JsonParser_t* parser) {
@@ -90,6 +92,7 @@ JsonError parser_end_write(JsonParser_t* parser) {
         return JsonError_PARSER_ERROR;
     }
     parser->buffer[index] = '\0';
+    return JsonError_NONE;
 }
 
 JsonError parser_write_char(JsonParser_t* parser, int c) {
@@ -112,7 +115,7 @@ JsonError parser_write_literal(JsonParser_t* parser, FILE* file) {
     return JsonError_PARSER_ERROR;
 }
 
-JsonError read_string(JsonParser_t* parser, FILE* file, char** value) {
+JsonError parse_string(JsonParser_t* parser, FILE* file, char** value) {
     parser->write_head = 0;
     int c;
     while ((c = fgetc(file)) != EOF) {
@@ -128,6 +131,7 @@ JsonError read_string(JsonParser_t* parser, FILE* file, char** value) {
             return err;
         }
     }
+    return JsonError_PARSER_ERROR;
 }
 
 JsonError read_name_value_separator(JsonParser_t* parser, FILE* file) {
@@ -137,6 +141,7 @@ JsonError read_name_value_separator(JsonParser_t* parser, FILE* file) {
             return JsonError_NONE;
         }
     }
+    return JsonError_PARSER_ERROR;
 }
 
 JsonError parse_number(JsonParser_t* parser, FILE* file, float* value) {
@@ -160,14 +165,17 @@ JsonError parse_number(JsonParser_t* parser, FILE* file, float* value) {
             return err;
         }
     }
+
+    return JsonError_PARSER_ERROR;
 }
 
 JsonError parse_element(JsonParser_t* parser, FILE* file, JsonElement_t* element) {
     int c;
     while ((c = fgetc(file)) != EOF) {
         if (c == '"') {
+            printf("parsing string\n");
             char* value;
-            JsonError err = read_string(parser, file, &value);
+            JsonError err = parse_string(parser, file, &value);
             if (err != JsonError_NONE){
                 return err;
             }
@@ -213,6 +221,7 @@ JsonError parse_element(JsonParser_t* parser, FILE* file, JsonElement_t* element
             return JsonError_NONE;
         }
         else if (c == '[') {
+            printf("Parsing array\n");
             JsonArray_t* arr = create_array();
             JsonError err = parse_array(parser, file, arr);
             if (err != JsonError_NONE) {
@@ -243,7 +252,7 @@ JsonError parse_object(JsonParser_t* parser, FILE* file, JsonObject_t* object) {
     while ((c = fgetc(file)) != EOF) {
         if (c == '"') {
             char* property_name;
-            JsonError err = read_string(parser, file, &property_name);
+            JsonError err = parse_string(parser, file, &property_name);
             if (err != JsonError_NONE){
                 printf("Failed to parse string\n");
                 return err;
@@ -283,6 +292,20 @@ JsonError parse_object(JsonParser_t* parser, FILE* file, JsonObject_t* object) {
 }
 
 JsonError parse_array(JsonParser_t* parser, FILE* file, JsonArray_t* array) {
+
+    int c;
+    while ((c = fgetc(file)) != EOF) {
+        if (c == ']') {
+            return JsonError_NONE;
+        }
+
+        ungetc(c, file);
+        JsonElement_t* element = create_element();
+        JsonError err = parse_element(parser, file, element);
+        if (err != JsonError_NONE) {
+            return err;
+        }
+    }
     return JsonError_PARSER_ERROR;
 }
 
@@ -294,7 +317,6 @@ JsonError json_parse_file(
 
     JsonParser_t parser = {0};
     JsonDoc_t* doc = (JsonDoc_t*)docHandle; 
-
     JsonElement_t* root_element = create_element();
 
     int c;
@@ -321,6 +343,7 @@ JsonError json_parse_file(
         }
         else if (c != ' ' && c != '\r' && c != '\n') {
             printf("Json file must start with a root object or array");
+            json_element_destroy(root_element);
             return JsonError_PARSER_ERROR;
         }
     }
