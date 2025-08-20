@@ -81,12 +81,32 @@ JsonError parser_begin_write(JsonParser_t* parser) {
     parser->write_head = 0;
 }
 
+JsonError parser_end_write(JsonParser_t* parser) {
+    size_t index = parser->write_head;
+    if (index >= 256) {
+        return JsonError_PARSER_ERROR;
+    }
+    parser->buffer[index] = '\0';
+}
+
 JsonError parser_write_char(JsonParser_t* parser, int c) {
     if (parser->write_head >= 256) {
         return JsonError_PARSER_ERROR;
     }
     parser->buffer[parser->write_head++] = c;
     return JsonError_NONE;
+}
+
+JsonError parser_write_literal(JsonParser_t* parser, FILE* file) {
+    int c;
+    while ((c = fgetc(file)) != EOF) {
+        if (!((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'))) {
+            ungetc(c, file);
+            return JsonError_NONE;
+        }
+        parser_write_char(parser, c);
+    }
+    return JsonError_PARSER_ERROR;
 }
 
 JsonError read_string(JsonParser_t* parser, FILE* file, char** value) {
@@ -123,10 +143,7 @@ JsonError parse_number(JsonParser_t* parser, FILE* file, float* value) {
             continue;
         }
         if (c != '.' && (c < '0' || c > '9')) {
-            printf("Char: %c\n", c);
             parser->buffer[parser->write_head] = '\0';
-            printf("Value: %s\n", parser->buffer);
-
             char *end;
             *value = strtof(parser->buffer, &end);
             if (parser->buffer == end) {
@@ -155,9 +172,30 @@ JsonError parse_element(JsonParser_t* parser, FILE* file, JsonElement_t* element
             printf("Property Value: %s\n", value);
             return JsonError_NONE;
         }
-        //     else if (c == 't' || c == 'f' || c == 'n') {
-        //         parser.state = JsonParserState_READ_ELEMENT_LITERAL;
-        //     }
+        else if (c == 't' || c == 'f' || c == 'n') {
+            parser_begin_write(parser);
+            parser_write_char(parser, c);
+            parser_write_literal(parser, file);
+            parser_end_write(parser);
+
+            if (strcmp(parser->buffer, "true") == 0) {
+                element->value.bool_value = 1;
+                printf("Property Value: true\n");
+                return JsonError_NONE;
+            }
+            else if (strcmp(parser->buffer, "false") == 0) {
+                element->value.bool_value = 0;
+                printf("Property Value: false\n");
+                return JsonError_NONE;
+            }
+            else if (strcmp(parser->buffer, "null") == 0) {
+                element->value.is_null = 1;
+                printf("Property Value: null\n");
+                return JsonError_NONE;
+            }
+            printf("Unknown litteral: %s\n", parser->buffer);
+            return JsonError_PARSER_ERROR;
+        }
         else if (c >= '0' && c <= '9') {
             parser_begin_write(parser);
             parser_write_char(parser, c);
