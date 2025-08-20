@@ -354,13 +354,16 @@ JsonError parse_array(JsonParser_t* parser, FILE* file, JsonArray_t* array) {
             printf("Finished parsing array\n");
             return JsonError_NONE;
         }
-
+        
         ungetc(c, file);
+
         JsonElement_t* element = element_create();
         JsonError err = parse_element(parser, file, element);
         if (err != JsonError_NONE) {
             return err;
         }
+        array->elements[array->elements_count] = element;
+        array->elements_count++;
     }
     return JsonError_PARSER_ERROR;
 }
