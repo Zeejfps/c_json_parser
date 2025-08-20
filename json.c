@@ -54,6 +54,13 @@ JsonDoc_t* doc_create() {
 }
 
 void doc_destroy(JsonDoc_t* doc) {
+    if (doc == 0) {
+        return;
+    }
+
+    element_destroy(doc->root);
+    doc->root = 0;
+
     free(doc);
     doc = 0;
 }
@@ -75,7 +82,36 @@ JsonElement_t* element_create() {
 }
 
 element_destroy(JsonElement_t* element) {
+    if (element == 0) {
+        return;
+    }
 
+    switch (element->kind)
+    {
+    
+    case JsonElementKind_ARRAY:
+        JsonArray_t* arr = (JsonArray_t*)element->value.array_value;
+        array_destroy(arr);
+        element->value.array_value = 0;
+        break;
+    
+    case JsonElementKind_OBJECT:
+        JsonObject_t* obj = (JsonObject_t*)element->value.obj_value;
+        object_destroy(obj);
+        element->value.obj_value = 0;
+        break;
+
+    case JsonElementKind_STRING:
+        char* str = element->value.str_value;
+        free(str);
+        element->value.str_value = 0;
+        break;
+
+    default:
+        break;
+    }
+
+    free(element);
 }
 
 JsonArray_t* array_create() {
@@ -85,6 +121,10 @@ JsonArray_t* array_create() {
 }
 
 void array_destroy(JsonArray_t* array){
+    if (array == 0) {
+        return;
+    }
+
     for (int i = 0; i < array->elements_count; i++) {
         element_destroy(array->elements[i]);
         array->elements[i] = 0;
@@ -103,6 +143,10 @@ JsonObject_t* object_create() {
 }
 
 void object_destroy(JsonObject_t* obj) {
+    if (obj == 0) {
+        return;
+    }
+
     for (int i = 0; i < obj->property_count; i++) {
         free(obj->property_names[i]);
         obj->property_names[i] = 0;
