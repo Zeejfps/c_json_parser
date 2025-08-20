@@ -1,39 +1,10 @@
 #include <stdlib.h>
+#include <string.h>
 #include "json.h"
 
-#define MAX_PARSERS 1
-
 typedef struct JsonParser_t {
-    enum JsonParserState {
-        JsonParserState_READ_ROOT_ELEMENT,
-
-        JsonParserState_READ_ARRAY,
-        JsonParserState_END_READ_ARRAY,
-
-        JsonParserState_READ_OBJECT,
-        JsonParserState_END_READ_OBJECT,
-
-        JsonParserState_READ_PROPERTY_NAME,
-        JsonParserState_READ_PROPERTY_VALUE,
-
-        JsonParserState_READ_ELEMENT,
-
-        JsonParserState_READ_STRING,
-        JsonParserState_END_READ_STRING,
-
-        JsonParserState_READ_ELEMENT_LITERAL,
-        JsonParserState_READ_ELEMENT_NUMBER,
-        JsonParserState_READ_NEXT_ELEMENT,
-
-        JsonParserState_READING_ARRAY_VALUE_STRING,
-        JsonParserState_READING_ARRAY_VALUE_LITERAL,
-        JsonParserState_READING_ARRAY_VALUE_NUMBER,
-        JsonParserState_READING_ARRAY_VALUE_ARRAY,
-        JsonParserState_READING_ARRAY_VALUE_OBJECT,
-        JsonParserState_READING_ARRAY_VALUE_SEPARATOR,
-    } state;
-    
-    JsonElement_t element;
+    char buffer[256];
+    size_t write_head;
 } JsonParser_t;
 
 typedef struct JsonElement_t {
@@ -58,12 +29,17 @@ typedef struct JsonElement_t {
 
 typedef struct JsonObject_t {
     char** property_names;
-    JsonElement_t* property_values;
+    JsonElement_t** property_values;
     size_t property_count;
 } JsonObject_t;
 
+typedef struct JsonArray_t {
+    JsonElement* values;
+    size_t value_count;
+} JsonArray_t;
+
 typedef struct JsonDoc_t {
-    u_int32_t test;
+    JsonElement root;
 } JsonDoc_t;
 
 JsonError json_doc_create(JsonDoc* docHandle) {
@@ -84,143 +60,120 @@ void json_element_destroy(JsonElement* elementHandle) {
     elementHandle = 0;
 }
 
+JsonElement_t* create_element() {
+    return (JsonElement_t*)calloc(1, sizeof(JsonElement_t));
+}
+
+JsonArray_t* create_array() {
+    return (JsonArray_t*)calloc(1, sizeof(JsonArray_t));
+}
+
+JsonObject_t* create_object() {
+    return (JsonObject_t*)calloc(1, sizeof(JsonObject_t));
+}
+
+JsonError parse_string(JsonParser_t* parser, FILE* file) {
+    int c;
+    while ((c = fgetc(file)) != EOF) {
+        if (c == '"') {
+            return JsonError_NONE;
+        }
+        if (parser->write_head >= 256) {
+            return JsonError_PARSER_ERROR;
+        }
+        parser->buffer[parser->write_head++] = c;
+    }
+}
+
+JsonError parse_object(JsonParser_t* parser, FILE* file, JsonObject_t* object) {
+    int c;
+    while ((c = fgetc(file)) != EOF) {
+        if (c == '"') {
+            JsonError err = parse_string(parser, file);
+            if (err != JsonError_NONE)
+                return err;
+            size_t property_name_len = parser->write_head;
+            char* property_name = malloc(sizeof(char) * property_name_len + 1);
+            memcpy(property_name, parser->buffer, sizeof(char) * property_name_len);
+
+            JsonElement_t* element = create_element();
+            parse_element(parser, file, element);
+
+            size_t property_index = object->property_count;
+            object->property_count++;
+            object->property_names[property_index] = property_name;
+            object->property_values[property_index] = element;
+        }
+        else if (c == '}') {
+            return JsonError_NONE;
+        }
+        else if (c != ' ' && c != '\r' && c != '\n') {
+            return JsonError_PARSER_ERROR;
+        }
+    }
+}
+
+JsonError parse_array(JsonParser_t* parser, FILE* file, JsonArray_t* array) {
+
+}
+
 JsonError json_parse_file(
     JsonDoc docHandle, 
     FILE* file
 ) {
     //TODO: Error Check
 
-    JsonParser_t parser = {
-        .state = JsonParserState_READ_ROOT_ELEMENT,
-        .element = {0}
-    };
+    JsonParser_t parser = {0};
     JsonDoc_t* doc = (JsonDoc_t*)docHandle; 
+
+    JsonElement_t* root_element = create_element();
 
     int c;
     while ((c = fgetc(file)) != EOF) {
-        switch (parser.state)
-        {
 
-        case JsonParserState_READ_ROOT_ELEMENT:
-            if (c == '{') {
-                parser.state = JsonParserState_READ_OBJECT;
-                parser.element.kind = JsonElementKind_OBJECT;
+        if (c == '{') {
+            JsonObject_t* obj = create_object();
+            JsonError err = parse_object(&parser, file, obj);
+            if (err != JsonError_NONE) {
+                return err;
             }
-            else if (c == '[') {
-                parser.state = JsonParserState_READ_ARRAY;
-                parser.element.kind = JsonElementKind_ARRAY;
-            }
-            else if (c != ' ' && c != '\r' && c != '\n') {
-                printf("Json file must start with a root object or array");
-                return JsonError_PARSER_ERROR;
-            }
-            break;
-
-        case JsonParserState_READ_OBJECT:
-            if (c == '"'){
-                parser.state = JsonParserState_READ_PROPERTY_NAME;
-            }
-            else if (c == '}') {
-                parser.state = JsonParserState_END_READ_OBJECT;
-            }
-            else if (c != ' ' && c != '\r' && c != '\n') {
-                printf("Invalid character: %c\n", (char)c);
-                return JsonError_PARSER_ERROR;
-            }
-            break;
-        
-        case JsonParserState_END_READ_OBJECT:
-            if (c == ',') {
-                parser.state = JsonParserState_READ_NEXT_ELEMENT;
-            }
-            break;
-
-        case JsonParserState_READ_NEXT_ELEMENT:
-            if (c == '{') {
-                parser.state = JsonParserState_READ_OBJECT;
-            }
-            else if (c == '"') {
-                parser.state = JsonParserState_READ_PROPERTY_NAME;
-            }
-            else if (c != ' ' && c != '\r' && c != '\n') {
-                return JsonError_PARSER_ERROR;
-            }
-            break;
-
-        case JsonParserState_READ_ELEMENT:
-            if (c == '"') {
-                parser.state = JsonParserState_READ_STRING;
-            }
-            else if (c == 't' || c == 'f' || c == 'n') {
-                parser.state = JsonParserState_READ_ELEMENT_LITERAL;
-            }
-            else if (c >= '0' && c <= '9') {
-                parser.state = JsonParserState_READ_ELEMENT_NUMBER;
-            }
-            else if (c == '[') {
-                parser.state = JsonParserState_READ_ARRAY;
-            }
-            else if (c == '{') {
-                parser.state = JsonParserState_READ_OBJECT;
-            }
-            break;
-
-        case JsonParserState_READ_STRING:
-            if (c == '"') {
-                parser.state = JsonParserState_END_READ_STRING;
-                if (parser.element.kind == JsonElementKind_OBJECT_PROPERTY_NAME) {
-                    // Save property name
-                }
-                else if (parser.element.kind == JsonElementKind_OBJECT_PROPERTY_VALUE) {
-                    // Save property value
-                }
-                else if (parser.element.kind == JsonElementKind_ARRAY_VALUE) {
-                    // Save array value
-                }
-            }
-            break;
-        
-        case JsonParserState_END_READ_STRING:
-            if (c == ':' && parser.element.kind == JsonElementKind_OBJECT_PROPERTY_NAME) {
-                parser.state = JsonParserState_READ_PROPERTY_NAME;
-            }
-            break;
-
-        case JsonParserState_READ_ELEMENT_LITERAL:
-            if (c == ' '){
-                //TODO: check if its true, false, or null
-                //parser.state = JsonParserState_READING_PROPERTY_SEPARATOR;
-            }
-            else if (c == ',') {
-                parser.state = JsonParserState_READ_OBJECT;
-            }
-            else if (c == '}') {
-                
-            }
-            else {
-
-            }
-            break;
-        
-        case JsonParserState_READ_ELEMENT_NUMBER:
-            if (c == ' '){
-                //TODO: check if its true, false, or null
-                //parser.state = JsonParserState_READING_PROPERTY_SEPARATOR;
-            }
-            else if (c == ',') {
-                parser.state = JsonParserState_READ_OBJECT;
-            }
-            else if (c == '}') {
-                
-            }            
-            break;
-
-        default:
+            root_element->value.obj_value = obj;
             break;
         }
+        else if (c == '[') {
+            JsonArray_t* arr = create_array();
+            JsonError err = parse_array(&parser, file, arr);
+            if (err != JsonError_NONE) {
+                return err;
+            }
+            root_element->value.array_value = arr;
+            break;
+        }
+        else if (c != ' ' && c != '\r' && c != '\n') {
+            printf("Json file must start with a root object or array");
+            return JsonError_PARSER_ERROR;
+        }
+        // case JsonParserState_READ_ELEMENT:
+        //     if (c == '"') {
+        //         parser.state = JsonParserState_READ_STRING;
+        //     }
+        //     else if (c == 't' || c == 'f' || c == 'n') {
+        //         parser.state = JsonParserState_READ_ELEMENT_LITERAL;
+        //     }
+        //     else if (c >= '0' && c <= '9') {
+        //         parser.state = JsonParserState_READ_ELEMENT_NUMBER;
+        //     }
+        //     else if (c == '[') {
+        //         parser.state = JsonParserState_READ_ARRAY;
+        //     }
+        //     else if (c == '{') {
+        //         parser.state = JsonParserState_READ_OBJECT;
+        //     }
+        //     break;
     }
 
-    printf("State %d\n", parser.state);
+    doc->root = root_element;
+
     return JsonError_NONE;
 }
 
