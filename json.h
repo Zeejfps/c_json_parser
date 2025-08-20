@@ -30,12 +30,12 @@ JsonError json_doc_get_root_element(
     JsonElement* out_root
 );
 
-JsonError json_element_get_object_value(
+JsonError json_element_get_value_object(
     JsonElement element,
     JsonObject* out_object
 );
 
-JsonError json_element_get_value_str(
+JsonError json_element_get_value_string(
     JsonElement element,
     char** out_value
 );

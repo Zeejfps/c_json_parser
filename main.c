@@ -25,7 +25,7 @@ int main() {
     json_doc_get_root_element(doc, &root);
 
     JsonObject root_obj;
-    json_element_get_object_value(root, &root_obj);
+    json_element_get_value_object(root, &root_obj);
 
     JsonElement name_prop;
     json_object_get_property_by_name(root_obj, "name", &name_prop);
@@ -35,7 +35,7 @@ int main() {
     }
 
     char* name_prop_value;
-    json_element_get_value_str(name_prop, &name_prop_value);
+    json_element_get_value_string(name_prop, &name_prop_value);
 
     printf("Name Prop Value: '%s'", name_prop_value);
 

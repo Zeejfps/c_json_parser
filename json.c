@@ -468,7 +468,7 @@ JsonError json_doc_get_root_element(
     return JsonError_NONE;
 }
 
-JsonError json_element_get_object_value(
+JsonError json_element_get_value_object(
     JsonElement element_handle,
     JsonObject* out_object
 ) {
@@ -496,7 +496,7 @@ JsonError json_object_get_property_by_name(
     return JsonError_OBJECT_PROPERTY_NOT_FOUND;
 }
 
-JsonError json_element_get_value_str(
+JsonError json_element_get_value_string(
     JsonElement element_handle,
     char** out_value
 ){
