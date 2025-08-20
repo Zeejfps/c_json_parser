@@ -4,22 +4,17 @@
 #include "json.h"
 
 int main() {
-    FILE* stream = fopen("sample.json", "r");
-    if (stream == 0){
+    FILE* file = fopen("sample.json", "r");
+    if (file == 0){
         printf("Failed to open file\n");
         return 1;
     }
 
-    JsonParser parser = 0;
-    json_parser_create(&parser);
-
     JsonDoc doc;
     json_doc_create(&doc);
 
-    // json_parse_file(parser, doc, stream);
+    json_parse_file(doc, file);
     
-    json_parser_destroy(&parser);
-
 
     // JsonElement root;
     // json_element_create(&root, doc);

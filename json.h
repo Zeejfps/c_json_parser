@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <stdint.h>
 
-typedef void* JsonParser;
 typedef void* JsonDoc;
 typedef void* JsonElement;
 
@@ -14,9 +13,6 @@ typedef enum JsonError {
     OUT_OF_PARSERS
 } JsonError;
 
-JsonError json_parser_create(JsonParser* parser);
-void json_parser_destroy(JsonParser* parser);
-
 JsonError json_doc_create(JsonDoc* doc);
 void json_doc_destroy(JsonDoc* doc);
 
@@ -24,7 +20,6 @@ JsonError json_element_create(JsonElement* element, JsonDoc doc);
 void json_element_destroy(JsonElement* element);
 
 JsonError json_parse_file(
-    JsonParser parser,
     JsonDoc doc, 
     FILE* file
 );
