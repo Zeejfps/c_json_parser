@@ -11,6 +11,7 @@
 typedef struct JsonObject_t JsonObject_t;
 typedef struct JsonArray_t JsonArray_t;
 typedef struct JsonElement_t JsonElement_t;
+typedef struct JsonString_t JsonString_t;
 
 typedef struct JsonParser_t {
     char buffer[256];
@@ -31,7 +32,7 @@ typedef struct JsonElement_t {
         char is_null;
         float float_value;
         JsonBool bool_value;
-        char* str_value;
+        JsonString_t* str_value;
         JsonObject_t* obj_value;
         JsonArray_t* array_value;
     } value;
@@ -537,7 +538,7 @@ JsonError json_object_get_property_by_name(
 
 JsonError json_element_get_value_string(
     JsonElement element_handle,
-    char** out_value
+    JsonString* out_value
 ){
     JsonElement_t* element = (JsonElement_t*)element_handle;
     if (element->kind != JsonElementKind_STRING) {
@@ -609,5 +610,28 @@ JsonError json_array_get_element_at_index(
     }
 
     *value = array->elements[index];
+    return JsonError_NONE;
+}
+
+JsonError json_string_get_length(
+    JsonString string_handle, 
+    size_t* out_length
+) {
+    if (string_handle == 0) {
+        return JsonError_STRING_IS_NULL;
+    }
+    JsonString_t* string = (JsonString_t*)string_handle;
+    *out_length = string->length;
+    return JsonError_NONE;
+}
+
+JsonError json_string_get_bytes(
+    JsonString string_handle, 
+    const char** out_bytes,
+    size_t* out_bytes_count
+) {
+    JsonString_t* string = (JsonString_t*)string_handle;
+    *out_bytes = string->bytes;
+    *out_bytes_count = string->bytes_count;
     return JsonError_NONE;
 }

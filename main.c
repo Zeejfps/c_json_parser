@@ -34,10 +34,13 @@ int main() {
         printf("Failed to find property with name: %s", "name");
     }
 
-    char* name_prop_value;
-    json_element_get_value_string(name_prop, &name_prop_value);
+    JsonString name_str;
+    json_element_get_value_string(name_prop, &name_str);
 
-    printf("Name Prop Value: '%s'\n", name_prop_value);
+    const char* name_str_bytes;
+    size_t name_str_bytes_count;
+    json_string_get_bytes(name_str, &name_str_bytes, &name_str_bytes_count);
+    printf("Name Prop Value: '%s'\n", name_str_bytes);
 
     JsonElement tags_prop;
     json_object_get_property_by_name(root_obj, "tags", &tags_prop);
@@ -53,10 +56,14 @@ int main() {
     JsonElement tag_element;
     json_array_get_element_at_index(tags_array, 1, &tag_element);
 
-    char* tag_value;
-    json_element_get_value_string(tag_element, &tag_value);
+    JsonString tag_str;
+    json_element_get_value_string(tag_element, &tag_str);
 
-    printf("Tag value: '%s'\n", tag_value);
+    const char* tag_str_bytes;
+    size_t tag_str_bytes_count;
+    json_string_get_bytes(tag_str, &tag_str_bytes, &tag_str_bytes_count);
+
+    printf("Tag value: '%s'\n", tag_str_bytes);
 
     json_doc_destroy(&doc);
 
