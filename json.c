@@ -5,8 +5,8 @@
 #define MAX_OBJECT_PROPERTY_COUNT 50
 #define MAX_ARRAY_ELEMENTS_COUNT 50
 
-#define JsonByte char
-#define JsonBool char
+#define Byte char
+#define Bool char
 
 typedef struct JsonObject_t JsonObject_t;
 typedef struct JsonArray_t JsonArray_t;
@@ -14,7 +14,7 @@ typedef struct JsonElement_t JsonElement_t;
 typedef struct JsonString_t JsonString_t;
 
 typedef struct JsonParser_t {
-    char buffer[256];
+    Byte buffer[256];
     size_t write_head;
 } JsonParser_t;
 
@@ -31,7 +31,7 @@ typedef struct JsonElement_t {
     {
         char is_null;
         float float_value;
-        JsonBool bool_value;
+        Bool bool_value;
         JsonString_t* str_value;
         JsonObject_t* obj_value;
         JsonArray_t* array_value;
@@ -54,7 +54,7 @@ typedef struct JsonDoc_t {
 } JsonDoc_t;
 
 typedef struct JsonString_t {
-    JsonByte* bytes;
+    Byte* bytes;
     size_t bytes_count;
     size_t length;
 } JsonString_t;
@@ -203,7 +203,7 @@ static void object_destroy(JsonObject_t* obj) {
     free(obj);
 }
 
-int read_token(FILE* file) {
+static int read_token(FILE* file) {
     int c;
     while ((c = fgetc(file)) != EOF) {
         if (c != ' ' && c != '\r' && c != '\n'){
@@ -213,12 +213,12 @@ int read_token(FILE* file) {
     return c;
 }
 
-JsonError parser_begin_write(JsonParser_t* parser) {
+static JsonError parser_begin_write(JsonParser_t* parser) {
     parser->write_head = 0;
     return JsonError_NONE;
 }
 
-JsonError parser_end_write(JsonParser_t* parser) {
+static JsonError parser_end_write(JsonParser_t* parser) {
     size_t index = parser->write_head;
     if (index >= 256) {
         return JsonError_PARSER_ERROR;
@@ -227,7 +227,7 @@ JsonError parser_end_write(JsonParser_t* parser) {
     return JsonError_NONE;
 }
 
-JsonError parser_write_char(JsonParser_t* parser, int c) {
+static JsonError parser_write_char(JsonParser_t* parser, int c) {
     if (parser->write_head >= 256) {
         return JsonError_PARSER_ERROR;
     }
@@ -235,7 +235,7 @@ JsonError parser_write_char(JsonParser_t* parser, int c) {
     return JsonError_NONE;
 }
 
-JsonError parser_write_literal(JsonParser_t* parser, FILE* file) {
+static JsonError parser_write_literal(JsonParser_t* parser, FILE* file) {
     int c;
     while ((c = fgetc(file)) != EOF) {
         if (!((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'))) {
