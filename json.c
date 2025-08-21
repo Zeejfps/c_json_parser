@@ -742,6 +742,10 @@ JsonError json_parse_file(
                     JsonObject_t* prev_obj = (JsonObject_t*)prev_frame.element;
                     prev_obj->property_values[prev_obj->property_count-1]->value.obj_value = curr_obj;
                 }
+                else if (prev_frame.kind == PARSE_ARRAY) {
+                    JsonArray_t* prev_arr = (JsonArray_t*)prev_frame.element;
+                    prev_arr->elements[prev_arr->elements_count-1]->value.obj_value = curr_obj;
+                }
             }
             top -= 1;
         } else if (frame.kind == PARSE_ARRAY) {
@@ -756,9 +760,10 @@ JsonError json_parse_file(
                 }
                 else if (prev_frame.kind == PARSE_ARRAY) {
                     JsonArray_t* prev_arr = (JsonArray_t*)prev_frame.element;
-                    //prev_arr->elements[prev_arr->elements_count-1]
+                    prev_arr->elements[prev_arr->elements_count-1]->value.array_value = curr_arr;
                 }
             }
+            top -= 1;
         }
     }
 
