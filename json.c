@@ -205,9 +205,74 @@ static void object_destroy(JsonObject_t* obj) {
     free(obj);
 }
 
+static int32_t read_utf8_code_point(FILE *f) {
+    int c1 = fgetc(f);
+    if (c1 == EOF) {
+        return -1;
+    }
+
+    unsigned char byte1 = (unsigned char)c1;
+
+    // 1-byte ASCII (0xxxxxxx)
+    if ((byte1 & 0x80) == 0) {
+        return byte1;
+    }
+
+    // Determine the number of bytes in the sequence
+    int bytes_needed;
+    int32_t codepoint;
+
+    if ((byte1 & 0xE0) == 0xC0) {        // 2-byte sequence (110xxxxx)
+        bytes_needed = 1;
+        codepoint = byte1 & 0x1F;
+    } else if ((byte1 & 0xF0) == 0xE0) { // 3-byte sequence (1110xxxx)
+        bytes_needed = 2;
+        codepoint = byte1 & 0x0F;
+    } else if ((byte1 & 0xF8) == 0xF0) { // 4-byte sequence (11110xxx)
+        bytes_needed = 3;
+        codepoint = byte1 & 0x07;
+    } else {
+        // Invalid start byte
+        return -1;
+    }
+
+    // Read and validate continuation bytes
+    for (int i = 0; i < bytes_needed; ++i) {
+        int next_byte = fgetc(f);
+        if (next_byte == EOF) {
+            return -1; // Unexpected EOF
+        }
+        unsigned char b = (unsigned char)next_byte;
+        if ((b & 0xC0) != 0x80) {
+            // Not a continuation byte
+            return -1;
+        }
+        codepoint = (codepoint << 6) | (b & 0x3F);
+    }
+
+    // Check for overlong encodings and other invalid code points
+    switch (bytes_needed) {
+        case 1:
+            if (codepoint < 0x80) return -1; // Overlong 2-byte
+            break;
+        case 2:
+            if (codepoint < 0x800) return -1; // Overlong 3-byte
+            break;
+        case 3:
+            if (codepoint < 0x10000) return -1; // Overlong 4-byte
+            break;
+    }
+
+    if (codepoint > 0x10FFFF || (codepoint >= 0xD800 && codepoint <= 0xDFFF)) {
+        return -1; // Invalid code point
+    }
+
+    return codepoint;
+}
+
 static int read_token(FILE* file) {
     int c;
-    while ((c = fgetc(file)) != EOF) {
+    while ((c = read_utf8_code_point(file)) != EOF) {
         if (c != ' ' && c != '\r' && c != '\n'){
             return c;
         }
