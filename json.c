@@ -48,6 +48,7 @@ typedef struct JsonObject_t {
 
 typedef struct JsonArray_t {
     JsonElement* elements;
+    size_t elements_array_size;
     size_t elements_count;
 } JsonArray_t;
 
@@ -159,6 +160,7 @@ static void element_destroy(JsonElement_t* element) {
 static JsonArray_t* array_create() {
     JsonArray_t* array = (JsonArray_t*)calloc(1, sizeof(JsonArray_t));
     array->elements = calloc(MAX_ARRAY_ELEMENTS_COUNT, sizeof(JsonElement_t*));
+    array->elements_array_size = MAX_ARRAY_ELEMENTS_COUNT;
     return array;
 }
 
@@ -386,7 +388,7 @@ JsonError parse_element(JsonParser_t* parser, FILE* file, JsonElement_t* element
             }
             element->kind = JsonElementKind_STRING;
             element->value.str_value = value;
-            //printf("Element Value: %s\n", value);
+            //printf("Element Str Value: %s\n", value->bytes);
             return JsonError_NONE;
         }
         else if (c == 't' || c == 'f' || c == 'n') {
@@ -427,7 +429,7 @@ JsonError parse_element(JsonParser_t* parser, FILE* file, JsonElement_t* element
             }
             element->kind = JsonElementKind_NUMBER;
             element->value.float_value = value;
-            //printf("Property Value: %f\n", value);
+            //printf("Element Num Value: %f\n", value);
             return JsonError_NONE;
         }
         else if (c == '[') {
@@ -519,7 +521,11 @@ JsonError parse_array(JsonParser_t* parser, FILE* file, JsonArray_t* array) {
         if (err != JsonError_NONE) {
             return err;
         }
-        array->elements[array->elements_count] = element;
+        size_t element_index = array->elements_count;
+        if (element_index >= array->elements_array_size) {
+            return JsonError_INDEX_OUT_OF_BOUNDS;
+        }
+        array->elements[element_index] = element;
         array->elements_count++;
     }
     return JsonError_PARSER_ERROR;
