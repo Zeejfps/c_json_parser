@@ -684,9 +684,9 @@ JsonError json_parse_file(
 
             JsonObject_t* curr_obj = (JsonObject_t*)frame.element;
 
-            parse_property:
-
             JsonString_t* property_name;
+
+            parse_property:
             err = parse_property_name(&parser, file, &property_name);
             if (err != JsonError_NONE) {
                 printf("Failed to parse property name\n");
@@ -744,6 +744,21 @@ JsonError json_parse_file(
                 }
             }
             top -= 1;
+        } else if (frame.kind == PARSE_ARRAY) {
+            JsonArray_t* curr_arr = (JsonArray_t*)frame.element;    
+
+            size_t prev_frame_index = top - 1;
+            if (prev_frame_index > -1) {
+                StackFrame prev_frame = stack[prev_frame_index];
+                if (prev_frame.kind == PARSE_OBJECT) {
+                    JsonObject_t* prev_obj = (JsonObject_t*)prev_frame.element;
+                    prev_obj->property_values[prev_obj->property_count-1]->value.array_value = curr_arr;
+                }
+                else if (prev_frame.kind == PARSE_ARRAY) {
+                    JsonArray_t* prev_arr = (JsonArray_t*)prev_frame.element;
+                    //prev_arr->elements[prev_arr->elements_count-1]
+                }
+            }
         }
     }
 
