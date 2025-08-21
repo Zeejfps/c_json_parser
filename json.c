@@ -39,7 +39,7 @@ typedef struct JsonElement_t {
 } JsonElement_t;
 
 typedef struct JsonObject_t {
-    char** property_names;
+    JsonString_t** property_names;
     JsonElement_t** property_values;
     size_t property_count;
 } JsonObject_t;
@@ -146,8 +146,8 @@ static void element_destroy(JsonElement_t* element) {
         element->value.obj_value = 0;
     }
     else if (element->kind == JsonElementKind_STRING) {
-        char* str = element->value.str_value;
-        free(str);
+        JsonString_t* str = element->value.str_value;
+        string_destroy(str);
         element->value.str_value = 0;
     }
 
@@ -177,7 +177,7 @@ static void array_destroy(JsonArray_t* array) {
 
 static JsonObject_t* object_create() {
     JsonObject_t* obj = (JsonObject_t*)calloc(1, sizeof(JsonObject_t));
-    obj->property_names = calloc(MAX_OBJECT_PROPERTY_COUNT, sizeof(char*));
+    obj->property_names = calloc(MAX_OBJECT_PROPERTY_COUNT, sizeof(JsonString_t*));
     obj->property_values = calloc(MAX_OBJECT_PROPERTY_COUNT, sizeof(JsonElement_t*));
     return obj;
 }
@@ -188,7 +188,7 @@ static void object_destroy(JsonObject_t* obj) {
     }
 
     for (int i = 0; i < obj->property_count; i++) {
-        free(obj->property_names[i]);
+        string_destroy(obj->property_names[i]);
         obj->property_names[i] = 0;
 
         element_destroy(obj->property_values[i]);
@@ -247,15 +247,18 @@ JsonError parser_write_literal(JsonParser_t* parser, FILE* file) {
     return JsonError_PARSER_ERROR;
 }
 
-JsonError parse_string(JsonParser_t* parser, FILE* file, char** value) {
+JsonError parse_string(JsonParser_t* parser, FILE* file, JsonString_t* value) {
     parser->write_head = 0;
     int c;
     while ((c = fgetc(file)) != EOF) {
         if (c == '"') {
             size_t str_len = parser->write_head;
-            char* str = malloc(sizeof(char) * (str_len + 1));
-            memcpy(str, parser->buffer, sizeof(char) * str_len);
-            *value = str;
+            size_t bytes_count = str_len + 1;
+            char* bytes = malloc(bytes_count);
+            memcpy(bytes, parser->buffer, sizeof(char) * str_len);
+            value->bytes = bytes;
+            value->bytes_count = bytes_count;
+            value->length = str_len;
             return JsonError_NONE;
         }
         JsonError err = parser_write_char(parser, c);
@@ -306,8 +309,8 @@ JsonError parse_element(JsonParser_t* parser, FILE* file, JsonElement_t* element
     while ((c = fgetc(file)) != EOF) {
         if (c == '"') {
             //printf("parsing string\n");
-            char* value;
-            JsonError err = parse_string(parser, file, &value);
+            JsonString_t* value = string_create();
+            JsonError err = parse_string(parser, file, value);
             if (err != JsonError_NONE){
                 return err;
             }
@@ -389,8 +392,8 @@ JsonError parse_object(JsonParser_t* parser, FILE* file, JsonObject_t* object) {
     int c;
     while ((c = read_token(file)) != EOF) {
         if (c == '"') {
-            char* property_name;
-            JsonError err = parse_string(parser, file, &property_name);
+            JsonString_t* property_name = string_create();
+            JsonError err = parse_string(parser, file, property_name);
             if (err != JsonError_NONE){
                 printf("Failed to parse string\n");
                 return err;
@@ -527,8 +530,8 @@ JsonError json_object_get_property_by_name(
 ) {
     JsonObject_t* obj = (JsonObject_t*)obj_handle;
     for (int i = 0; i < obj->property_count; i++) {
-        char* prop_name = obj->property_names[i];
-        if (strcmp(name, prop_name) == 0) {
+        JsonString_t* prop_name = obj->property_names[i];
+        if (strcmp(name, prop_name->bytes) == 0) {
             *out_property = obj->property_values[i];
             return JsonError_NONE;
         }
