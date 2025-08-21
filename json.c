@@ -664,16 +664,16 @@ JsonError json_parse_file(
         top++;
         stack[top].kind = PARSE_OBJECT;
         stack[top].element = obj;
-        printf("pushing obj\n");
+        //printf("pushing obj\n");
     }
     else if (token == '[') {
         JsonArray_t* array = array_create();
-        root_element->kind = JsonElementKind_OBJECT;
+        root_element->kind = JsonElementKind_ARRAY;
         root_element->value.array_value = array;
         top++;
         stack[top].kind = PARSE_ARRAY;
         stack[top].element = array;
-        printf("pushing array\n");
+        //printf("pushing array\n");
     }
     else {
         printf("Json file must start with root object or array");
@@ -833,7 +833,7 @@ JsonError json_element_get_value_object(
     JsonObject* out_object
 ) {
     JsonElement_t* element = (JsonElement_t*)element_handle;
-    printf("Kind: %d", element->kind);
+    //printf("Kind: %d", element->kind);
     if (element->kind != JsonElementKind_OBJECT) {
         return JsonError_ELEMENT_KIND_MISSMATCH;
     }
