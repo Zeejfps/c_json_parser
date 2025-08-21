@@ -560,13 +560,14 @@ JsonError json_parse_file(
                     return err;
                 }
 
-                size_t propertyIndex = curr_obj->property_count;
-                if (propertyIndex >= curr_obj->property_names_array_size) {
+                size_t property_index = curr_obj->property_count;
+                if (property_index >= curr_obj->property_names_array_size) {
+                    printf("Property index is out of bounds. Index: %zu, Max: %zu\n", property_index, curr_obj->property_names_array_size);
                     return JsonError_INDEX_OUT_OF_BOUNDS;
                 }
                 curr_obj->property_count++;
-                curr_obj->property_names[propertyIndex] = property_name;
-                curr_obj->property_values[propertyIndex] = property_value;
+                curr_obj->property_names[property_index] = property_name;
+                curr_obj->property_values[property_index] = property_value;
 
                 if (property_value->kind == JsonElementKind_OBJECT) {
                     top++;
@@ -646,6 +647,7 @@ JsonError json_parse_file(
 
             size_t element_index = curr_arr->elements_count;
             if (element_index >= curr_arr->elements_array_size) {
+                printf("Array element index is out of bounds. Index: %zu, Max: %zu\n", element_index, curr_arr->elements_array_size);
                 return JsonError_INDEX_OUT_OF_BOUNDS;
             }
             curr_arr->elements_count++;
