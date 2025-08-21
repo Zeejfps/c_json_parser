@@ -57,12 +57,12 @@ static void array_destroy(JsonArray_t* array);
 static JsonObject_t* object_create();
 static void object_destroy(JsonObject_t* obj);
 
-JsonDoc_t* doc_create() {
+static JsonDoc_t* doc_create() {
     JsonDoc_t* doc = (JsonDoc_t*)calloc(1, sizeof(JsonDoc_t));
     return doc;
 }
 
-void doc_destroy(JsonDoc_t* doc) {
+static void doc_destroy(JsonDoc_t* doc) {
     if (doc == 0) {
         return;
     }
@@ -86,11 +86,11 @@ void json_doc_destroy(JsonDoc* docHandle) {
     *docHandle = 0;
 }
 
-JsonElement_t* element_create() {
+static JsonElement_t* element_create() {
     return (JsonElement_t*)calloc(1, sizeof(JsonElement_t));
 }
 
-void element_destroy(JsonElement_t* element) {
+static void element_destroy(JsonElement_t* element) {
     if (element == 0) {
         return;
     }
@@ -114,13 +114,13 @@ void element_destroy(JsonElement_t* element) {
     free(element);
 }
 
-JsonArray_t* array_create() {
+static JsonArray_t* array_create() {
     JsonArray_t* array = (JsonArray_t*)calloc(1, sizeof(JsonArray_t));
     array->elements = calloc(MAX_ARRAY_ELEMENTS_COUNT, sizeof(JsonElement_t*));
     return array;
 }
 
-void array_destroy(JsonArray_t* array) {
+static void array_destroy(JsonArray_t* array) {
     if (array == 0) {
         return;
     }
