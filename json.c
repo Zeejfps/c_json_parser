@@ -654,23 +654,26 @@ JsonError json_parse_file(
     JsonElement_t* root_element = element_create();
 
     uint32_t token = read_next_token(file);
+    printf("Token: %c\n", token);
     if (token == EOF) {
         element_destroy(root_element);
         return JsonError_PARSER_ERROR;
     }
 
     StackFrame stack[10];
-    size_t top = -1;
+    int32_t top = -1;
 
     if (token == '{') {
         top++;
         stack[top].kind = PARSE_OBJECT;
         stack[top].element = object_create();
+        printf("pushing obj\n");
     }
     else if (token == '[') {
         top++;
         stack[top].kind = PARSE_ARRAY;
         stack[top].element = array_create();
+        printf("pushing array\n");
     }
     else {
         printf("Json file must start with root object or array");
@@ -678,10 +681,12 @@ JsonError json_parse_file(
     }
 
     JsonError err;
+    printf("Top: %d\n", top);
     while (top > -1) {
+        printf("Processing frame\n}");
         StackFrame frame = stack[top];
         if (frame.kind == PARSE_OBJECT) {
-
+            printf("parsing object\n");
             JsonObject_t* curr_obj = (JsonObject_t*)frame.element;
 
             JsonString_t* property_name;
@@ -748,7 +753,10 @@ JsonError json_parse_file(
                 }
             }
             top -= 1;
+            printf("finished parsing object\n");
+
         } else if (frame.kind == PARSE_ARRAY) {
+            printf("parsing array\n");
             JsonArray_t* curr_arr = (JsonArray_t*)frame.element;    
 
             JsonElement_t* array_value;
@@ -796,6 +804,7 @@ JsonError json_parse_file(
                 }
             }
             top -= 1;
+            printf("finished parsing array\n");
         }
     }
 
