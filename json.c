@@ -5,6 +5,10 @@
 #define MAX_OBJECT_PROPERTY_COUNT 50
 #define MAX_ARRAY_ELEMENTS_COUNT 50
 
+typedef struct JsonObject_t JsonObject_t;
+typedef struct JsonArray_t JsonArray_t;
+typedef struct JsonElement_t JsonElement_t;
+
 typedef struct JsonParser_t {
     char buffer[256];
     size_t write_head;
@@ -25,8 +29,8 @@ typedef struct JsonElement_t {
         float float_value;
         char bool_value;
         char* str_value;
-        JsonObject obj_value;
-        JsonArray array_value;
+        JsonObject_t* obj_value;
+        JsonArray_t* array_value;
     } value;
 } JsonElement_t;
 
@@ -96,12 +100,12 @@ static void element_destroy(JsonElement_t* element) {
     }
 
     if (element->kind == JsonElementKind_ARRAY) {
-        JsonArray_t* arr = (JsonArray_t*)(element->value.array_value);
+        JsonArray_t* arr = element->value.array_value;
         array_destroy(arr);
         element->value.array_value = 0;
     }
     else if (element->kind == JsonElementKind_OBJECT) {
-        JsonObject_t* obj = (JsonObject_t*)(element->value.obj_value);
+        JsonObject_t* obj = element->value.obj_value;
         object_destroy(obj);
         element->value.obj_value = 0;
     }
