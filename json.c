@@ -263,9 +263,11 @@ JsonError parse_string(JsonParser_t* parser, FILE* file, JsonString_t* value) {
         }
         JsonError err = parser_write_char(parser, c);
         if (err != JsonError_NONE) {
+            printf("Failed to write char: %c\n", c);
             return err;
         }
     }
+    printf("Closing brace not found\n");
     return JsonError_PARSER_ERROR;
 }
 
