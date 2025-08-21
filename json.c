@@ -751,6 +751,38 @@ JsonError json_parse_file(
         } else if (frame.kind == PARSE_ARRAY) {
             JsonArray_t* curr_arr = (JsonArray_t*)frame.element;    
 
+            JsonElement_t* array_value;
+            parse_value:
+            err = parse_value(&parser, file, &array_value);
+            if (err != JsonError_NONE) {
+                printf("Failed to parse array value\n");
+                return err;
+            }
+
+            if (array_value->kind == JsonElementKind_OBJECT) {
+                top++;
+                stack[top].element = array_value->value.obj_value;
+                stack[top].kind = PARSE_OBJECT;
+                continue;
+            }
+
+            if (array_value->kind == JsonElementKind_ARRAY) {
+                top++;
+                stack[top].element = array_value->value.array_value;
+                stack[top].kind = PARSE_ARRAY;
+                continue;
+            }
+            
+            int32_t next_token = read_next_token(file);
+            if (next_token == ',') {
+                goto parse_value;
+            }
+
+            if (next_token != ']') {
+                printf("Expected ']' token, found %c\n", next_token);
+                return JsonError_PARSER_ERROR;
+            }
+
             size_t prev_frame_index = top - 1;
             if (prev_frame_index > -1) {
                 StackFrame prev_frame = stack[prev_frame_index];
