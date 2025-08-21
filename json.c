@@ -5,6 +5,7 @@
 #define MAX_OBJECT_PROPERTY_COUNT 50
 #define MAX_ARRAY_ELEMENTS_COUNT 50
 #define INITIAL_PARSER_BUFFER_SIZE 512
+#define MAX_PARSE_DEPTH 10
 
 #define Byte char
 #define Bool char
@@ -500,7 +501,7 @@ JsonError json_parse_file(
         return JsonError_PARSER_ERROR;
     }
 
-    StackFrame stack[10];
+    StackFrame stack[MAX_PARSE_DEPTH];
     int32_t top = -1;
 
     if (token == '{') {
