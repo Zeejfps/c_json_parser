@@ -56,6 +56,7 @@ typedef struct JsonElement_t {
 typedef struct JsonObject_t {
     JsonString_t** property_names;
     JsonElement_t** property_values;
+    size_t property_names_array_size;
     size_t property_count;
 } JsonObject_t;
 
@@ -153,6 +154,7 @@ static void element_destroy(JsonElement_t* element) {
     }
 
     free(element);
+    element = 0;
 }
 
 static JsonArray_t* array_create() {
@@ -175,11 +177,13 @@ static void array_destroy(JsonArray_t* array) {
     array->elements = 0;
 
     free(array);
+    array = 0;
 }
 
 static JsonObject_t* object_create() {
     JsonObject_t* obj = (JsonObject_t*)calloc(1, sizeof(JsonObject_t));
     obj->property_names = calloc(MAX_OBJECT_PROPERTY_COUNT, sizeof(JsonString_t*));
+    obj->property_names_array_size = MAX_OBJECT_PROPERTY_COUNT;
     obj->property_values = calloc(MAX_OBJECT_PROPERTY_COUNT, sizeof(JsonElement_t*));
     return obj;
 }
@@ -557,6 +561,9 @@ JsonError json_parse_file(
                 }
 
                 size_t propertyIndex = curr_obj->property_count;
+                if (propertyIndex >= curr_obj->property_names_array_size) {
+                    return JsonError_INDEX_OUT_OF_BOUNDS;
+                }
                 curr_obj->property_count++;
                 curr_obj->property_names[propertyIndex] = property_name;
                 curr_obj->property_values[propertyIndex] = property_value;
@@ -638,6 +645,9 @@ JsonError json_parse_file(
             }
 
             size_t element_index = curr_arr->elements_count;
+            if (element_index >= curr_arr->elements_array_size) {
+                return JsonError_INDEX_OUT_OF_BOUNDS;
+            }
             curr_arr->elements_count++;
             curr_arr->elements[element_index] = array_value;
 
