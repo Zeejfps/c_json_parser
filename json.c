@@ -47,7 +47,7 @@ typedef struct JsonObject_t {
 } JsonObject_t;
 
 typedef struct JsonArray_t {
-    JsonElement* elements;
+    JsonElement_t** elements;
     size_t elements_array_size;
     size_t elements_count;
 } JsonArray_t;
