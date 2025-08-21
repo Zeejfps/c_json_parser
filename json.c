@@ -135,14 +135,14 @@ static void array_destroy(JsonArray_t* array) {
     free(array);
 }
 
-JsonObject_t* object_create() {
+static JsonObject_t* object_create() {
     JsonObject_t* obj = (JsonObject_t*)calloc(1, sizeof(JsonObject_t));
     obj->property_names = calloc(MAX_OBJECT_PROPERTY_COUNT, sizeof(char*));
     obj->property_values = calloc(MAX_OBJECT_PROPERTY_COUNT, sizeof(JsonElement_t*));
     return obj;
 }
 
-void object_destroy(JsonObject_t* obj) {
+static void object_destroy(JsonObject_t* obj) {
     if (obj == 0) {
         return;
     }
