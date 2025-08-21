@@ -691,13 +691,15 @@ JsonError json_parse_file(
 
             int32_t token = read_next_token(file);
             if (token == '"') {
+                
                 JsonString_t* property_name;
-                parse_property:
                 err = parse_property_name(&parser, file, &property_name);
                 if (err != JsonError_NONE) {
                     printf("Failed to parse property name\n");
                     return err;
                 }
+
+                printf("Property name: %s\n", property_name->bytes);
 
                 err = read_name_value_separator(&parser, file);
                 if (err != JsonError_NONE) {
@@ -735,7 +737,7 @@ JsonError json_parse_file(
             }
 
             if (token == ',') {
-                goto parse_property;
+                continue;
             }
 
             if (token != '}') {
@@ -763,12 +765,15 @@ JsonError json_parse_file(
             JsonArray_t* curr_arr = (JsonArray_t*)frame.element;    
 
             JsonElement_t* array_value;
-            parse_value:
             err = parse_value(&parser, file, &array_value);
             if (err != JsonError_NONE) {
                 printf("Failed to parse array value\n");
                 return err;
             }
+
+            size_t element_index = curr_arr->elements_count;
+            curr_arr->elements_count++;
+            curr_arr->elements[element_index] = array_value;
 
             if (array_value->kind == JsonElementKind_OBJECT) {
                 top++;
@@ -786,7 +791,7 @@ JsonError json_parse_file(
             
             int32_t next_token = read_next_token(file);
             if (next_token == ',') {
-                goto parse_value;
+                continue;
             }
 
             if (next_token != ']') {
