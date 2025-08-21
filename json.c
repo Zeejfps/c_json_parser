@@ -531,6 +531,26 @@ JsonError parse_array(JsonParser_t* parser, FILE* file, JsonArray_t* array) {
     return JsonError_PARSER_ERROR;
 }
 
+JsonError parse_property_name(JsonParser_t* parser, FILE* file, JsonString_t** out_name) {
+
+    int32_t token = read_next_token(file);
+    if (token != '"') {
+        printf("Expecting '\"' token, found '%s'\n", token);
+        return JsonError_PARSER_ERROR;
+    }
+
+    JsonString_t* name_str = string_create();
+    JsonError err = parse_string(parser, file, name_str);
+    if (err != JsonError_NONE) {
+        string_destroy(name_str);
+        printf("Failed to parse string\n");
+        return err;
+    }
+
+    *out_name = name_str;
+    return JsonError_NONE;
+}
+
 typedef struct StackFrame {
     enum {
         PARSE_OBJECT,
