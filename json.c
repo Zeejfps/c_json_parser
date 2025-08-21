@@ -4,6 +4,7 @@
 
 #define MAX_OBJECT_PROPERTY_COUNT 50
 #define MAX_ARRAY_ELEMENTS_COUNT 50
+#define INITIAL_PARSER_BUFFER_SIZE 512
 
 #define Byte char
 #define Bool char
@@ -14,7 +15,8 @@ typedef struct JsonElement_t JsonElement_t;
 typedef struct JsonString_t JsonString_t;
 
 typedef struct JsonParser_t {
-    Byte buffer[256];
+    Byte buffer[INITIAL_PARSER_BUFFER_SIZE];
+    size_t buffer_size;
     size_t write_head;
 } JsonParser_t;
 
@@ -220,7 +222,7 @@ static JsonError parser_begin_write(JsonParser_t* parser) {
 
 static JsonError parser_end_write(JsonParser_t* parser) {
     size_t index = parser->write_head;
-    if (index >= 256) {
+    if (index >= parser->buffer_size) {
         return JsonError_PARSER_ERROR;
     }
     parser->buffer[index] = '\0';
@@ -228,7 +230,7 @@ static JsonError parser_end_write(JsonParser_t* parser) {
 }
 
 static JsonError parser_write_char(JsonParser_t* parser, int c) {
-    if (parser->write_head >= 256) {
+    if (parser->write_head >= parser->buffer_size) {
         return JsonError_PARSER_ERROR;
     }
     parser->buffer[parser->write_head++] = c;
@@ -263,7 +265,7 @@ JsonError parse_string(JsonParser_t* parser, FILE* file, JsonString_t* value) {
         }
         JsonError err = parser_write_char(parser, c);
         if (err != JsonError_NONE) {
-            printf("Failed to write char: %c\n", c);
+            printf("Failed to write char: 0x%04X\n", c);
             return err;
         }
     }
@@ -462,7 +464,9 @@ JsonError json_parse_file(
     JsonDoc docHandle, 
     FILE* file
 ) {
-    JsonParser_t parser = {0};
+    JsonParser_t parser = {
+        .buffer_size = INITIAL_PARSER_BUFFER_SIZE,
+    };
     JsonDoc_t* doc = (JsonDoc_t*)docHandle; 
     JsonElement_t* root_element = element_create();
 
