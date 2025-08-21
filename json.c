@@ -535,7 +535,7 @@ JsonError parse_property_name(JsonParser_t* parser, FILE* file, JsonString_t** o
 
     int32_t token = read_next_token(file);
     if (token != '"') {
-        printf("Expecting '\"' token, found '%s'\n", token);
+        printf("Expecting '\"' token, found '%c'\n", token);
         return JsonError_PARSER_ERROR;
     }
 
@@ -549,6 +549,90 @@ JsonError parse_property_name(JsonParser_t* parser, FILE* file, JsonString_t** o
 
     *out_name = name_str;
     return JsonError_NONE;
+}
+
+JsonError parse_value(JsonParser_t* parser, FILE* file, JsonElement_t** out_element) {
+    uint32_t token = read_next_token(file);
+    if (token == EOF) {
+        return JsonError_PARSER_ERROR;
+    }
+
+    if (token == '"') {
+        JsonString_t* value = string_create();
+        JsonError err = parse_string(parser, file, value);
+        if (err != JsonError_NONE){
+            printf("Failed to parse string\n");
+            return err;
+        }
+        JsonElement_t* element = element_create();
+        element->kind = JsonElementKind_STRING;
+        element->value.str_value = value;
+        *out_element = element;
+        return JsonError_NONE;
+    }
+    else if (token == 't' || token == 'f' || token == 'n') {
+        parser_begin_write(parser);
+        parser_write_char(parser, token);
+        parser_write_literal(parser, file);
+        parser_end_write(parser);
+
+        JsonElement_t* element = element_create();
+        if (strcmp(parser->buffer, "true") == 0) {
+            element->kind = JsonElementKind_BOOLEAN;
+            element->value.bool_value = 1;
+            *out_element = element;
+            return JsonError_NONE;
+        }
+        else if (strcmp(parser->buffer, "false") == 0) {
+            element->kind = JsonElementKind_BOOLEAN;
+            element->value.bool_value = 0;
+            *out_element = element;
+            return JsonError_NONE;
+        }
+        else if (strcmp(parser->buffer, "null") == 0) {
+            element->kind = JsonElementKind_NULL;
+            element->value.is_null = 1; // Do i need this?
+            *out_element = element;
+            return JsonError_NONE;
+        }
+        printf("Unknown litteral: %s\n", parser->buffer);
+        return JsonError_PARSER_ERROR;
+    }
+    else if (token >= '0' && token <= '9') {
+        parser_begin_write(parser);
+        parser_write_char(parser, token);
+        float value;
+        JsonError err = parse_number(parser, file, &value);
+        if (err != JsonError_NONE){
+            printf("Failed to parse number\n");
+            return err;
+        }
+        JsonElement_t* element = element_create();
+        element->kind = JsonElementKind_NUMBER;
+        element->value.float_value = value;
+        *out_element = element;
+        //printf("Element Num Value: %f\n", value);
+        return JsonError_NONE;
+    }
+    else if (token == '[') {
+        JsonArray_t* arr = array_create();
+        JsonElement_t* element = element_create();
+        element->kind = JsonElementKind_ARRAY;
+        element->value.array_value = arr;
+        *out_element = element;
+        return JsonError_NONE;
+    }
+    else if (token == '{') {
+        JsonObject_t* obj = object_create();
+        JsonElement_t* element = element_create();
+        element->kind = JsonElementKind_OBJECT;
+        element->value.obj_value = obj;
+        *out_element = element;
+        return JsonError_NONE;
+    }
+
+    printf("Unknown token '%c'\n", token);
+    return JsonError_PARSER_ERROR;
 }
 
 typedef struct StackFrame {
@@ -586,7 +670,7 @@ JsonError json_parse_file(
     else if (token == '[') {
         top++;
         stack[top].kind = PARSE_ARRAY;
-        stack[top].kind = array_create();
+        stack[top].element = array_create();
     }
     else {
         printf("Json file must start with root object or array");
@@ -616,7 +700,7 @@ JsonError json_parse_file(
             }
 
             JsonElement_t* property_value;
-            err = parse_property_value(&parser, file, &property_value);
+            err = parse_value(&parser, file, &property_value);
             if (err != JsonError_NONE) {
                 printf("Failed to parse property value\n");
                 return err;
