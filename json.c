@@ -9,10 +9,23 @@
 #define Byte char
 #define Bool char
 
+// Forward Declarations
 typedef struct JsonObject_t JsonObject_t;
 typedef struct JsonArray_t JsonArray_t;
 typedef struct JsonElement_t JsonElement_t;
 typedef struct JsonString_t JsonString_t;
+
+static JsonString_t* string_create();
+static void string_destroy(JsonString_t* string);
+
+static JsonElement_t* element_create();
+static void element_destroy(JsonElement_t* element);
+
+static JsonArray_t* array_create();
+static void array_destroy(JsonArray_t* array);
+
+static JsonObject_t* object_create();
+static void object_destroy(JsonObject_t* obj);
 
 typedef struct JsonParser_t {
     Byte buffer[INITIAL_PARSER_BUFFER_SIZE];
@@ -61,21 +74,6 @@ typedef struct JsonString_t {
     size_t bytes_count;
     size_t length;
 } JsonString_t;
-
-static JsonError parse_object(JsonParser_t* parser, FILE* file, JsonObject_t* object);
-static JsonError parse_array(JsonParser_t* parser, FILE* file, JsonArray_t* array);
-
-static JsonString_t* string_create();
-static void string_destroy(JsonString_t* string);
-
-static JsonElement_t* element_create();
-static void element_destroy(JsonElement_t* element);
-
-static JsonArray_t* array_create();
-static void array_destroy(JsonArray_t* array);
-
-static JsonObject_t* object_create();
-static void object_destroy(JsonObject_t* obj);
 
 static JsonString_t* string_create() {
     JsonString_t* string = (JsonString_t*)calloc(1, sizeof(JsonString_t));
@@ -316,6 +314,16 @@ static JsonError parser_write_literal(JsonParser_t* parser, FILE* file) {
     return JsonError_PARSER_ERROR;
 }
 
+JsonError read_name_value_separator(JsonParser_t* parser, FILE* file) {
+    int c;
+    while ((c = fgetc(file)) != EOF) {
+        if (c == ':') {
+            return JsonError_NONE;
+        }
+    }
+    return JsonError_PARSER_ERROR;
+}
+
 JsonError parse_string(JsonParser_t* parser, FILE* file, JsonString_t* value) {
     parser->write_head = 0;
     int c;
@@ -337,16 +345,6 @@ JsonError parse_string(JsonParser_t* parser, FILE* file, JsonString_t* value) {
         }
     }
     printf("Closing brace not found\n");
-    return JsonError_PARSER_ERROR;
-}
-
-JsonError read_name_value_separator(JsonParser_t* parser, FILE* file) {
-    int c;
-    while ((c = fgetc(file)) != EOF) {
-        if (c == ':') {
-            return JsonError_NONE;
-        }
-    }
     return JsonError_PARSER_ERROR;
 }
 
@@ -374,163 +372,7 @@ JsonError parse_number(JsonParser_t* parser, FILE* file, float* value) {
 
     return JsonError_PARSER_ERROR;
 }
-
-JsonError parse_element(JsonParser_t* parser, FILE* file, JsonElement_t* element) {
-    int c;
-    while ((c = fgetc(file)) != EOF) {
-        if (c == '"') {
-            //printf("parsing string\n");
-            JsonString_t* value = string_create();
-            JsonError err = parse_string(parser, file, value);
-            if (err != JsonError_NONE){
-                printf("Failed to parse string\n");
-                return err;
-            }
-            element->kind = JsonElementKind_STRING;
-            element->value.str_value = value;
-            //printf("Element Str Value: %s\n", value->bytes);
-            return JsonError_NONE;
-        }
-        else if (c == 't' || c == 'f' || c == 'n') {
-            parser_begin_write(parser);
-            parser_write_char(parser, c);
-            parser_write_literal(parser, file);
-            parser_end_write(parser);
-
-            if (strcmp(parser->buffer, "true") == 0) {
-                element->kind = JsonElementKind_BOOLEAN;
-                element->value.bool_value = 1;
-                //printf("Element Value: true\n");
-                return JsonError_NONE;
-            }
-            else if (strcmp(parser->buffer, "false") == 0) {
-                element->kind = JsonElementKind_BOOLEAN;
-                element->value.bool_value = 0;
-                //printf("Element Value: false\n");
-                return JsonError_NONE;
-            }
-            else if (strcmp(parser->buffer, "null") == 0) {
-                element->kind = JsonElementKind_NULL;
-                element->value.is_null = 1; // Do i need this?
-                //printf("Element Value: null\n");
-                return JsonError_NONE;
-            }
-            printf("Unknown litteral: %s\n", parser->buffer);
-            return JsonError_PARSER_ERROR;
-        }
-        else if (c >= '0' && c <= '9') {
-            parser_begin_write(parser);
-            parser_write_char(parser, c);
-            float value;
-            JsonError err = parse_number(parser, file, &value);
-            if (err != JsonError_NONE){
-                printf("Failed to parse number\n");
-                return err;
-            }
-            element->kind = JsonElementKind_NUMBER;
-            element->value.float_value = value;
-            //printf("Element Num Value: %f\n", value);
-            return JsonError_NONE;
-        }
-        else if (c == '[') {
-            JsonArray_t* arr = array_create();
-            JsonError err = parse_array(parser, file, arr);
-            if (err != JsonError_NONE) {
-                printf("Failed to parse array\n");
-                return err;
-            }
-            element->kind = JsonElementKind_ARRAY;
-            element->value.array_value = arr;
-            //printf("Value is Array\n");
-            return JsonError_NONE;
-        }
-        else if (c == '{') {
-            JsonObject_t* obj = object_create();
-            JsonError err = parse_object(parser, file, obj);
-            if (err != JsonError_NONE) {
-                printf("Failed to parse object\n");
-                return err;
-            }
-            element->kind = JsonElementKind_OBJECT;
-            element->value.obj_value = obj;
-            return JsonError_NONE;
-        }
-    }
-    return JsonError_PARSER_ERROR;
-}
-
-JsonError parse_object(JsonParser_t* parser, FILE* file, JsonObject_t* object) {
-    //printf("parsing object\n");
-    int c;
-    while ((c = read_next_token(file)) != EOF) {
-        if (c == '"') {
-            JsonString_t* property_name = string_create();
-            JsonError err = parse_string(parser, file, property_name);
-            if (err != JsonError_NONE){
-                printf("Failed to parse string\n");
-                return err;
-            }
-            //printf("Property Name: %s\n", property_name);
-
-            err = read_name_value_separator(parser, file);
-            if (err != JsonError_NONE) {
-                printf("Failed to read name-value separator");
-                return err;
-            }
-
-            JsonElement_t* element = element_create();
-            err = parse_element(parser, file, element);
-            if (err != JsonError_NONE) {
-                printf("Failed to parse property value\n");
-                return err;
-            }
-
-            size_t property_index = object->property_count;
-            object->property_count++;
-            object->property_names[property_index] = property_name;
-            object->property_values[property_index] = element;
-        }
-        else if (c == '}') {
-            //printf("Finished parsing object\n");
-            return JsonError_NONE;
-        }
-        else if (c == ',') {
-
-        }
-        else {
-            printf("Unexpected character encountered: %c\n", (char)c);
-            return JsonError_PARSER_ERROR;
-        }
-    }
-    return JsonError_PARSER_ERROR;
-}
-
-JsonError parse_array(JsonParser_t* parser, FILE* file, JsonArray_t* array) {
-    //printf("Parsing array...\n");
-    int c;
-    while ((c = read_next_token(file)) != EOF) {
-        if (c == ']') {
-            //printf("Finished parsing array\n");
-            return JsonError_NONE;
-        }
         
-        ungetc(c, file);
-
-        JsonElement_t* element = element_create();
-        JsonError err = parse_element(parser, file, element);
-        if (err != JsonError_NONE) {
-            return err;
-        }
-        size_t element_index = array->elements_count;
-        if (element_index >= array->elements_array_size) {
-            return JsonError_INDEX_OUT_OF_BOUNDS;
-        }
-        array->elements[element_index] = element;
-        array->elements_count++;
-    }
-    return JsonError_PARSER_ERROR;
-}
-
 JsonError parse_property_name(JsonParser_t* parser, FILE* file, JsonString_t** out_name) {
 
     JsonString_t* name_str = string_create();
