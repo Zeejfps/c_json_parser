@@ -312,6 +312,7 @@ JsonError parse_element(JsonParser_t* parser, FILE* file, JsonElement_t* element
             JsonString_t* value = string_create();
             JsonError err = parse_string(parser, file, value);
             if (err != JsonError_NONE){
+                printf("Failed to parse string\n");
                 return err;
             }
             element->kind = JsonElementKind_STRING;
