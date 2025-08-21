@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include "json.h"
 
-int main() {
+int main(){
     FILE* file = fopen("simple.json", "r");
     if (file == 0){
         printf("Failed to open file\n");
@@ -13,22 +13,40 @@ int main() {
     JsonDoc doc;
     json_doc_create(&doc);
 
-    JsonError result = json_parse_file(doc, file);
+    JsonError err = json_parse_file(doc, file);
 
-    if (result != JsonError_NONE) {
-        printf("Error parsing file: %d", result);
+    if (err != JsonError_NONE) {
+        printf("Error parsing file: %d\n", err);
         json_doc_destroy(&doc);
         return 1;
     }
 
+    printf("Parsed json file successfully.\n");
+
     JsonElement root;
-    json_doc_get_root_element(doc, &root);
+    err = json_doc_get_root_element(doc, &root);
+    if (err != JsonError_NONE) {
+        printf("Failed to get root element\n");
+        json_doc_destroy(&doc);
+        return 1;
+    }
 
     JsonObject root_obj;
-    json_element_get_value_object(root, &root_obj);
+    err = json_element_get_value_object(root, &root_obj);
+    if (err != JsonError_NONE) {
+        printf("Failed to get object value\n");
+        json_doc_destroy(&doc);
+        return 1;
+    }
 
     JsonElement name_prop;
-    json_object_get_property_by_name(root_obj, "name", &name_prop);
+    err = json_object_get_property_by_name(root_obj, "name", &name_prop);
+    if (err != JsonError_NONE) {
+        printf("Failed to get property by name\n");
+        json_doc_destroy(&doc);
+        return 1;
+    }
+
 
     if (name_prop == 0) {
         printf("Failed to find property with name: %s", "name");
@@ -43,7 +61,12 @@ int main() {
     printf("Name Prop Value: '%s'\n", name_str_bytes);
 
     JsonElement tags_prop;
-    json_object_get_property_by_name(root_obj, "tags", &tags_prop);
+    err = json_object_get_property_by_name(root_obj, "tags", &tags_prop);
+    if (err != JsonError_NONE) {
+        printf("Failed to find tags property\n");
+        json_doc_destroy(&doc);
+        return 1;
+    }
 
     JsonArray tags_array;
     json_element_get_value_array(tags_prop, &tags_array);
